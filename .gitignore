@@ -1,0 +1,13 @@
+# Сборка
+/dist/
+/cmd/setup/payload/
+/cmd/setup/icon.png
+*.syso
+*.exe
+
+# Редакторы и ОС
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

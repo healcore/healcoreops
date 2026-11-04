@@ -1,0 +1,152 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+:root { --bg:#f2f2f4; --panel:#fff; --border:#dcdce1; --text:#17171a; --muted:#6a6a72; --accent:#141416; --accent-fg:#fff; --track:#e4e4e8; color-scheme: light; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#0c0c0e; --panel:#151518; --border:#2a2a2f; --text:#e6e6e9; --muted:#8b8b93; --accent:#f2f2f3; --accent-fg:#0c0c0e; --track:#1d1d21; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 13.5px/1.5 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; user-select: none; overflow: hidden; }
+.wrap { height: 100%; display: flex; flex-direction: column; padding: 34px 40px 26px; }
+.hero { display: flex; align-items: center; gap: 18px; margin-bottom: 26px; }
+.hero img { width: 64px; height: 64px; border-radius: 14px; }
+h1 { margin: 0; font-size: 22px; letter-spacing: .14em; font-weight: 700; }
+.ver { color: var(--muted); font-size: 12px; }
+.step { display: none; flex: 1; flex-direction: column; }
+.step.on { display: flex; }
+p { margin: 0 0 14px; }
+.muted { color: var(--muted); }
+label.f { display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+.path { display: flex; gap: 8px; margin-bottom: 18px; }
+input[type=text] { flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; color: inherit; font: inherit; outline: none; user-select: text; }
+input[type=text]:focus { border-color: var(--muted); }
+.check { display: flex; align-items: center; gap: 10px; margin: 8px 0; cursor: pointer; }
+input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; }
+.spacer { flex: 1; }
+.foot { display: flex; justify-content: flex-end; gap: 10px; padding-top: 16px; border-top: 1px solid var(--border); }
+button { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 9px 20px; font: inherit; font-weight: 600; cursor: pointer; min-width: 110px; }
+button:hover { border-color: var(--muted); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.bar { height: 6px; background: var(--track); border-radius: 3px; overflow: hidden; margin: 18px 0 10px; }
+.bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+.note { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 12.5px; margin-bottom: 16px; }
+.err { color: var(--text); font-weight: 600; }
+.big-ok { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><img src="{{ICON}}" alt=""><div><h1>HEALCOREOPS</h1><div class="ver" id="ver"></div></div></div>
+
+  <div class="step" id="s-install">
+    <p id="intro"></p>
+    <div class="note" id="upgrade" style="display:none"></div>
+    <label class="f" id="lblDir"></label>
+    <div class="path"><input type="text" id="dir" spellcheck="false"><button id="browse"></button></div>
+    <label class="check"><input type="checkbox" id="desktop" checked><span id="lblDesktop"></span></label>
+    <label class="check"><input type="checkbox" id="startMenu" checked><span id="lblStart"></span></label>
+    <div class="spacer"></div>
+    <div class="foot"><button id="cancel1"></button><button class="primary" id="go"></button></div>
+  </div>
+
+  <div class="step" id="s-uninstall">
+    <p id="uIntro"></p>
+    <label class="check"><input type="checkbox" id="removeData"><span id="lblData"></span></label>
+    <div class="spacer"></div>
+    <div class="foot"><button id="cancel2"></button><button class="primary" id="uGo"></button></div>
+  </div>
+
+  <div class="step" id="s-progress">
+    <p id="pTitle" class="big-ok"></p>
+    <div class="bar"><i id="pBar"></i></div>
+    <div class="muted" id="pStep"></div>
+    <div class="spacer"></div>
+  </div>
+
+  <div class="step" id="s-done">
+    <div class="big-ok" id="dTitle"></div>
+    <p class="muted" id="dText"></p>
+    <label class="check" id="launchRow"><input type="checkbox" id="launch" checked><span id="lblLaunch"></span></label>
+    <div class="spacer"></div>
+    <div class="foot"><button class="primary" id="finish"></button></div>
+  </div>
+</div>
+<script>
+const T = {
+  ru: {
+    ver: "Версия %1", intro: "Мастер установит HealCoreOps — менеджер ресурсов компьютера: мониторинг, распределение ресурсов между программами, оптимизация и твики Windows. Ничего докачивать не нужно — всё уже внутри.",
+    upgrade: "Уже установлена версия %1 — она будет обновлена. Настройки и правила сохранятся.",
+    lblDir: "Папка установки", browse: "Обзор…", lblDesktop: "Создать ярлык на рабочем столе", lblStart: "Добавить в меню «Пуск»",
+    cancel: "Отмена", go: "Установить", goUp: "Обновить",
+    uIntro: "HealCoreOps будет удалён с этого компьютера вместе с ярлыками.", lblData: "Удалить также настройки и правила", uGo: "Удалить",
+    pInstall: "Установка…", pUninstall: "Удаление…",
+    dInstall: "HealCoreOps установлен", dInstallText: "Программа доступна в меню «Пуск». Для твиков и управления системными процессами в окне программы будет кнопка «Перезапустить от имени администратора».",
+    dUninstall: "HealCoreOps удалён", dUninstallText: "Спасибо, что пользовались программой.",
+    dErr: "Не получилось", lblLaunch: "Запустить HealCoreOps", finish: "Готово", close: "Закрыть",
+  },
+  en: {
+    ver: "Version %1", intro: "This wizard installs HealCoreOps — a PC resource manager: monitoring, resource allocation between programs, optimization and Windows tweaks. Nothing else to download — everything is included.",
+    upgrade: "Version %1 is already installed and will be updated. Your settings and rules are kept.",
+    lblDir: "Install folder", browse: "Browse…", lblDesktop: "Create a desktop shortcut", lblStart: "Add to the Start menu",
+    cancel: "Cancel", go: "Install", goUp: "Update",
+    uIntro: "HealCoreOps and its shortcuts will be removed from this PC.", lblData: "Also remove settings and rules", uGo: "Uninstall",
+    pInstall: "Installing…", pUninstall: "Uninstalling…",
+    dInstall: "HealCoreOps is installed", dInstallText: "Find it in the Start menu. For tweaks and system process control, use the “Restart as administrator” button inside the app.",
+    dUninstall: "HealCoreOps was removed", dUninstallText: "Thank you for using it.",
+    dErr: "Something went wrong", lblLaunch: "Launch HealCoreOps", finish: "Finish", close: "Close",
+  },
+};
+let L, info, mode;
+const $ = id => document.getElementById(id);
+const tx = (k, a) => (L[k] || k).replace("%1", a);
+function show(id) { document.querySelectorAll(".step").forEach(s => s.classList.toggle("on", s.id === id)); }
+
+async function run(start, title) {
+  show("s-progress"); $("pTitle").textContent = title;
+  await start();
+  for (;;) {
+    const p = await hcoProgress();
+    $("pBar").style.width = p.pct + "%"; $("pStep").textContent = p.step;
+    if (p.done) return p;
+    await new Promise(r => setTimeout(r, 150));
+  }
+}
+function done(p, okTitle, okText, canLaunch) {
+  show("s-done");
+  if (p.err) { $("dTitle").textContent = tx("dErr"); $("dText").textContent = p.err; $("dText").className = "err"; }
+  else { $("dTitle").textContent = okTitle; $("dText").textContent = okText; }
+  $("launchRow").style.display = canLaunch && !p.err ? "" : "none";
+  $("finish").textContent = p.err ? tx("close") : tx("finish");
+}
+
+(async () => {
+  info = await hcoInfo();
+  L = T[info.lang] || T.en; mode = info.mode;
+  $("ver").textContent = tx("ver", info.version);
+  ["intro", "lblDir", "browse", "lblDesktop", "lblStart", "uIntro", "lblData", "uGo", "lblLaunch"].forEach(k => $(k).textContent = tx(k));
+  $("cancel1").textContent = $("cancel2").textContent = tx("cancel");
+  $("go").textContent = info.installed ? tx("goUp") : tx("go");
+  $("dir").value = info.dir;
+  if (info.installed) { $("upgrade").style.display = ""; $("upgrade").textContent = tx("upgrade", info.installedVersion || "?"); }
+  show(mode === "uninstall" ? "s-uninstall" : "s-install");
+
+  $("browse").onclick = async () => { const p = await hcoPick($("dir").value); if (p) $("dir").value = p; };
+  $("cancel1").onclick = $("cancel2").onclick = () => hcoClose();
+  $("go").onclick = async () => {
+    const dir = $("dir").value;
+    const p = await run(() => hcoInstall(dir, $("desktop").checked, $("startMenu").checked), tx("pInstall"));
+    done(p, tx("dInstall"), tx("dInstallText"), true);
+    $("finish").onclick = async () => { if (!p.err && $("launch").checked) await hcoLaunch(dir); hcoClose(); };
+  };
+  $("uGo").onclick = async () => {
+    const p = await run(() => hcoUninstall($("removeData").checked), tx("pUninstall"));
+    done(p, tx("dUninstall"), tx("dUninstallText"), false);
+    $("finish").onclick = () => hcoClose();
+  };
+  document.addEventListener("keydown", e => { if (e.key === "Enter") document.querySelector(".step.on .primary")?.click(); });
+})();
+</script>
+</body>
+</html>

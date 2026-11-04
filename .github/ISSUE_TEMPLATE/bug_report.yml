@@ -1,0 +1,29 @@
+name: Ошибка / Bug report
+description: Что-то работает не так / Something doesn't work
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: Что случилось / What happened
+      description: Шаги, ожидаемый и фактический результат. Скриншот очень помогает.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Версия HealCoreOps / Version
+      description: Правый нижний угол окна, например v1.8.0
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Windows
+      description: Например Windows 11 Pro 24H2 / Windows 10 22H2
+  - type: textarea
+    id: log
+    attributes:
+      label: Журнал / Log
+      description: Раздел «История → Журнал» или файл из %APPDATA%\HealCoreOps\logs
+      render: text

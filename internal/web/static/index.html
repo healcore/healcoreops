@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HealCoreOps</title>
+<link rel="icon" href="icon.png">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <img src="icon.png" alt="" class="logo">
+      <div>
+        <div class="brand-name">HEALCOREOPS</div>
+        <div class="brand-sub" data-t="tagline"></div>
+      </div>
+    </div>
+    <div class="host">
+      <div class="host-lines">
+        <div id="hostLine1"></div>
+        <div id="hostLine2" class="muted"></div>
+      </div>
+      <span id="policyBadge" class="badge hidden" data-t="managed"></span>
+      <span id="rightsBadge" class="badge"></span>
+      <button id="elevateBtn" class="btn btn-accent hidden" data-t="elevate"></button>
+    </div>
+  </header>
+
+  <nav class="side" id="nav">
+    <button class="nav-search" id="paletteBtn" type="button"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span data-t="search_all"></span><kbd>Ctrl K</kbd></button>
+    <div class="nav-group" data-t="ng_monitor"></div>
+    <button data-page="overview" class="active"><svg viewBox="0 0 24 24"><path d="M3 13h4v8H3zM10 9h4v12h-4zM17 4h4v17h-4z"/></svg><span data-t="nav_overview"></span></button>
+    <button data-page="processes"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 10h16M4 15h16M4 20h10"/></svg><span data-t="nav_processes"></span></button>
+    <button data-page="rules"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span data-t="nav_rules"></span></button>
+    <div class="nav-group" data-t="ng_clean"></div>
+    <button data-page="optimize"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span data-t="nav_optimize"></span></button>
+    <button data-page="disk" id="navDisk"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg><span data-t="nav_disk"></span></button>
+    <button data-page="programs" id="navPrograms"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14v7M14 17.5h7"/></svg><span data-t="nav_programs"></span></button>
+    <button data-page="autostart" id="navAutostart"><svg viewBox="0 0 24 24"><path d="M12 2v6M12 8l-3-3M12 8l3-3"/><path d="M5 12a7 7 0 1 0 14 0"/></svg><span data-t="nav_autostart"></span></button>
+    <button data-page="tweaks" id="navTweaks"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-.6-.6-2.5z"/></svg><span data-t="nav_tweaks"></span></button>
+    <div class="nav-group" data-t="ng_system"></div>
+    <button data-page="drivers" id="navDrivers"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="10" rx="2"/><path d="M7 8V5h10v3M7 13h.01M11 13h.01"/></svg><span data-t="nav_drivers"></span></button>
+    <button data-page="services" id="navServices"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01M11 7h6M11 17h6"/></svg><span data-t="nav_services"></span></button>
+    <button data-page="registry" id="navRegistry"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16M8 4v16"/></svg><span data-t="nav_registry"></span></button>
+    <button data-page="maintenance" id="navMaintenance"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-.6-.6-2.5z" opacity=".35"/><path d="M4 20l6-6M9 9 4 4M4 8l4-1 1-4"/></svg><span data-t="nav_maintenance"></span></button>
+    <div class="nav-group" data-t="ng_diag"></div>
+    <button data-page="network" id="navNetwork"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></svg><span data-t="nav_network"></span></button>
+    <button data-page="crashes" id="navCrashes"><svg viewBox="0 0 24 24"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/></svg><span data-t="nav_crashes"></span></button>
+    <button data-page="report" id="navReport"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h3v16H5V5h3z"/><path d="m9 13 2 2 4-4"/></svg><span data-t="nav_report"></span></button>
+    <button data-page="history"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg><span data-t="nav_history"></span></button>
+    <div class="side-spacer"></div>
+    <button data-page="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg><span data-t="nav_settings"></span></button>
+  </nav>
+
+  <main class="main" id="main">
+    <!-- ОБЗОР -->
+    <section class="page active" id="page-overview">
+      <div class="card banner hidden" id="rebootBanner"><div class="grow"><b data-t="reboot_pending"></b><div class="muted small" id="rebootReasons"></div></div></div>
+      <div class="grid4">
+        <div class="card stat"><div class="card-title" data-t="cpu"></div><div class="big" id="sCpu">—</div><div class="sub" id="sCpuSub"></div><canvas class="spark" id="cCpu"></canvas></div>
+        <div class="card stat"><div class="card-title" data-t="memory"></div><div class="big" id="sMem">—</div><div class="sub" id="sMemSub"></div><canvas class="spark" id="cMem"></canvas></div>
+        <div class="card stat"><div class="card-title" data-t="disk_io"></div><div class="big" id="sIo">—</div><div class="sub" id="sIoSub"></div><canvas class="spark" id="cIo"></canvas></div>
+        <div class="card stat"><div class="card-title" data-t="network"></div><div class="big" id="sNet">—</div><div class="sub" id="sNetSub"></div><canvas class="spark" id="cNet"></canvas></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><div class="card-title" data-t="per_core"></div><div class="cores" id="cores"></div></div>
+        <div class="stack">
+          <div class="card"><div class="card-title" data-t="mem_system"></div>
+            <div id="memMeters"></div>
+            <div class="sep"></div>
+            <div class="kv" id="sysInfo"></div>
+          </div>
+          <div class="card"><div class="card-title" data-t="drives"></div><div id="drives"></div></div>
+        </div>
+      </div>
+      <div class="card"><div class="card-title" data-t="top_procs"></div>
+        <table class="mini"><thead><tr><th data-t="col_process"></th><th class="num" data-t="col_cpu"></th><th class="num" data-t="col_mem"></th><th class="barcol"></th></tr></thead><tbody id="topProcs"></tbody></table>
+      </div>
+      <div class="card hidden" id="healthCard"><div class="card-title" data-t="hardware"></div><div id="healthBody"></div></div>
+    </section>
+
+    <!-- ПРОЦЕССЫ -->
+    <section class="page" id="page-processes">
+      <div class="toolbar">
+        <input id="procSearch" class="input grow" data-tp="search_ph">
+        <span class="muted" id="procCount"></span>
+      </div>
+      <div class="toolbar actionbar">
+        <div class="grow sel-info" id="selInfo" data-t="select_proc"></div>
+        <select id="prioSel" class="input" disabled></select>
+        <button class="btn" id="affBtn" disabled data-t="cores_btn"></button>
+        <button class="btn" id="suspBtn" disabled data-t="suspend"></button>
+        <button class="btn" id="resBtn" disabled data-t="resume"></button>
+        <button class="btn" id="ruleBtn" disabled data-t="to_rule"></button>
+        <button class="btn btn-danger" id="killBtn" disabled data-t="kill"></button>
+      </div>
+      <div class="card table-card">
+        <div class="table-wrap">
+          <table class="procs">
+            <thead><tr id="procHead"></tr></thead>
+            <tbody id="procBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ПРАВИЛА -->
+    <section class="page" id="page-rules">
+      <label class="switch-row"><span class="switch"><input type="checkbox" id="autoRules"><i></i></span><span data-t="auto_rules"></span></label>
+      <div class="grid2 rules-grid">
+        <div class="card">
+          <div class="card-title" data-t="rules_list"></div>
+          <div id="rulesList" class="rules-list"></div>
+          <div class="card-foot"><button class="btn" id="applyRules" data-t="apply_now"></button></div>
+        </div>
+        <div class="card">
+          <div class="card-title" data-t="new_rule"></div>
+          <div class="form">
+            <label data-t="f_process"></label><input id="rPattern" class="input" placeholder="chrome.exe, steam*, *worker*">
+            <label data-t="f_priority"></label><select id="rPrio" class="input"></select>
+            <label data-t="f_cores"></label><input id="rCores" class="input">
+          </div>
+          <button class="btn btn-accent wide" id="addRule" data-t="add_rule"></button>
+          <div class="sep"></div>
+          <div class="help" data-t="rules_help"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ОПТИМИЗАЦИЯ -->
+    <section class="page" id="page-optimize">
+      <div class="card" id="checkupCard">
+        <div class="checkup-head">
+          <div><div class="card-title" style="margin:0" data-t="checkup"></div><div class="muted small" id="checkupSub" data-t="checkup_hint"></div></div>
+          <button class="btn btn-accent" id="checkupBtn" data-t="checkup_run"></button>
+        </div>
+        <div id="checkupList"></div>
+      </div>
+      <div class="grid2">
+        <div class="stack">
+          <div class="card">
+            <div class="card-title" data-t="sys_state"></div>
+            <div class="score-row"><div class="score" id="score">—</div><div><div class="verdict" id="verdict"></div><div class="muted small" data-t="score_hint"></div></div></div>
+            <div class="bar big-bar"><i id="scoreBar"></i></div>
+            <div class="sep"></div>
+            <div id="recs"></div>
+          </div>
+          <div class="card">
+            <div class="card-title" data-t="cleanup"></div>
+            <p id="tempInfo" class="muted"></p>
+            <div class="row2"><button class="btn" id="scanTemp" data-t="scan_temp"></button><button class="btn" id="cleanTemp" disabled data-t="clean_temp"></button></div>
+          </div>
+        </div>
+        <div class="stack">
+          <div class="card">
+            <div class="card-title" data-t="quick_opt"></div>
+            <button class="btn btn-accent wide" id="trimBtn" data-t="free_mem"></button>
+            <button class="btn wide" id="hogsBtn" data-t="hogs"></button>
+            <button class="btn wide" id="applyRules2" data-t="apply_all_rules"></button>
+            <p class="help" data-t="quick_help"></p>
+          </div>
+          <div class="card">
+            <div class="card-title" data-t="power"></div>
+            <div class="seg" id="powerSeg"></div>
+            <p class="muted small" id="powerMsg"></p>
+          </div>
+          <div class="card">
+            <div class="card-title" data-t="schedule"></div>
+            <label class="switch-row"><span class="switch"><input type="checkbox" id="schedOn"><i></i></span><span data-t="schedule_on"></span></label>
+            <div class="form sched-form">
+              <label data-t="schedule_when"></label><div class="toolbar"><select id="schedDay" class="input"></select><select id="schedHour" class="input"></select></div>
+              <label data-t="schedule_what"></label><div id="schedCats" class="sched-cats"></div>
+            </div>
+            <div class="toolbar"><button class="btn" id="schedRun" data-t="schedule_now"></button><span class="muted small grow" id="schedLast"></span></div>
+            <p class="help" data-t="schedule_help"></p>
+          </div>
+          <div class="card">
+            <div class="card-title" data-t="auto_opt"></div>
+            <label class="switch-row"><span class="switch"><input type="checkbox" id="autoTrim"><i></i></span><span data-t="auto_trim"></span></label>
+            <div class="range-row"><span id="thrLbl"></span><input type="range" id="thr" min="60" max="95" step="5"></div>
+            <p class="muted small" data-t="auto_trim_hint"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ТВИКИ -->
+    <section class="page" id="page-tweaks">
+      <div id="tweaksUnsupported" class="card hidden"><p data-t="tweaks_only_win"></p></div>
+      <div class="policy-note hidden" data-rule="tweaks"></div>
+      <div id="tweaksMain">
+        <div class="card warn-card">
+          <div class="warn-text">
+            <b data-t="tweaks_warn_title"></b>
+            <span class="muted" data-t="tweaks_warn"></span>
+          </div>
+          <div class="warn-actions">
+            <button class="btn" id="restorePoint" data-t="restore_point"></button>
+            <button class="btn" id="restartExplorer" data-t="restart_explorer"></button>
+          </div>
+        </div>
+        <div class="subtabs">
+          <button class="active" data-sub="apps" data-t="tw_apps"></button>
+          <button data-sub="settings" data-t="tw_settings"></button>
+        </div>
+        <div id="sub-apps" class="subpane active">
+          <div class="toolbar">
+            <button class="btn" id="twReload" data-t="refresh"></button>
+            <button class="btn" id="twRec" data-t="select_rec"></button>
+            <button class="btn" id="twNone" data-t="select_none"></button>
+            <label class="check"><input type="checkbox" id="twOnlyInst" checked><span data-t="only_installed"></span></label>
+            <div class="grow"></div>
+            <button class="btn btn-danger" id="twRemove" disabled></button>
+          </div>
+          <div id="appsList"></div>
+        </div>
+        <div id="sub-settings" class="subpane">
+          <div class="toolbar">
+            <input id="twSetSearch" class="input grow" data-tp="tw_search_ph">
+            <label class="check"><input type="checkbox" id="twRecOnly"><span data-t="rec_only"></span></label>
+            <button class="btn" id="twSetReload" data-t="refresh"></button>
+            <button class="btn btn-accent" id="twApplyRec"></button>
+          </div>
+          <div class="muted small" id="twSetStats"></div>
+          <div id="settingsList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- АВТОЗАГРУЗКА -->
+    <section class="page" id="page-autostart">
+      <div id="autostartUnsupported" class="card hidden"><p data-t="autostart_only_win"></p></div>
+      <div id="autostartMain">
+        <div class="card hidden" id="bootCard"><div class="card-title" data-t="as_boot"></div><div id="bootMini"></div></div>
+        <div class="toolbar">
+          <span class="muted grow" data-t="autostart_hint"></span>
+          <input id="asSearch" class="input" data-tp="as_search_ph">
+          <button class="btn" id="asReload" data-t="refresh"></button>
+        </div>
+        <div class="muted small" id="asStats"></div>
+        <div id="autostartList"></div>
+      </div>
+    </section>
+
+    <!-- ОБСЛУЖИВАНИЕ -->
+    <section class="page" id="page-maintenance">
+      <div id="maintUnsupported" class="card hidden"><p data-t="maint_only_win"></p></div>
+      <div id="maintMain">
+        <div class="card warn-card">
+          <div class="warn-text"><b data-t="maint_warn_title"></b><span class="muted" data-t="maint_warn"></span></div>
+          <button class="btn" id="maintRestore" data-t="restore_point"></button>
+        </div>
+        <div id="maintList"></div>
+      </div>
+    </section>
+
+    <!-- ДРАЙВЕРЫ -->
+    <section class="page" id="page-drivers">
+      <div id="driversUnsupported" class="card hidden"><p data-t="drivers_only_win"></p></div>
+      <div id="driversMain">
+        <div class="card" id="sysInfoCard">
+          <div class="card-title"><span data-t="sysinfo"></span></div>
+          <div class="kv" id="sysInfoBody"></div>
+          <div class="card-foot"><button class="btn" id="sysCopy" data-t="copy"></button></div>
+        </div>
+        <p class="help" data-t="driver_src"></p>
+        <div class="toolbar"><span class="muted grow" data-t="devices_hint"></span><input id="drvSearch" class="input" data-tp="as_search_ph"><button class="btn" id="drvReload" data-t="refresh"></button></div>
+        <div id="devicesList"></div>
+        <details class="wu-details">
+          <summary data-t="driver_wu_title"></summary>
+          <div class="card" style="margin-top:10px">
+            <p class="help" data-t="driver_wu_help"></p>
+            <div class="toolbar" style="margin:8px 0">
+              <button class="btn" id="drvScan" data-t="driver_scan"></button>
+              <button class="btn" id="drvInstallAll" data-t="driver_install_all" disabled></button>
+              <span class="muted small grow" id="drvScanMsg"></span>
+            </div>
+            <div id="drvJobLog" class="joblog hidden"></div>
+            <div id="drvUpdates"></div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- REGISTRY HEALER -->
+    <section class="page" id="page-registry">
+      <div id="registryUnsupported" class="card hidden"><p data-t="registry_only_win"></p></div>
+      <div class="policy-note hidden" data-rule="registry"></div>
+      <div id="registryMain">
+        <div class="card warn-card">
+          <div class="warn-text"><b data-t="reg_warn_title"></b><span class="muted" data-t="reg_warn"></span></div>
+          <button class="btn" id="regRestore" data-t="restore_point"></button>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn-accent" id="regScan" data-t="reg_scan"></button>
+          <button class="btn" id="regSelAll" data-t="all" disabled></button>
+          <button class="btn btn-danger" id="regFix" disabled></button>
+          <span class="muted small grow" id="regStats"></span>
+        </div>
+        <div id="regList"></div>
+      </div>
+    </section>
+
+    <!-- МЕСТО НА ДИСКЕ -->
+    <section class="page" id="page-disk">
+      <div class="policy-note hidden" data-rule="disk"></div>
+      <div class="drives-row" id="diskDrives"></div>
+      <div class="card">
+        <div class="toolbar" style="margin-bottom:6px"><div class="card-title grow" style="margin:0" data-t="junk"></div><span class="muted small" id="junkTotal"></span><button class="btn" id="junkReload" data-t="refresh"></button><button class="btn btn-accent" id="junkCleanAll" disabled></button></div>
+        <div id="junkList"></div>
+      </div>
+      <div class="card">
+        <div class="toolbar"><div class="card-title grow" style="margin:0" data-t="disk_analyze"></div><input id="diskPath" class="input path-input" spellcheck="false"><button class="btn btn-accent" id="diskScanBtn" data-t="analyze"></button><button class="btn hidden" id="diskCancel" data-t="cancel"></button></div>
+        <div class="crumbs" id="diskCrumbs"></div>
+        <div class="muted small" id="diskStatus" data-t="disk_intro"></div>
+        <div class="grid2 disk-grid">
+          <div><div class="group-title" data-t="disk_folders"></div><div id="diskFolders" class="items"></div></div>
+          <div><div class="group-title" data-t="disk_files"></div><div id="diskFiles" class="items"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ПРОГРАММЫ -->
+    <section class="page" id="page-programs">
+      <div id="programsUnsupported" class="card hidden"><p data-t="win_only"></p></div>
+      <div id="programsMain" class="stack">
+        <div class="policy-note hidden" data-rule="programs"></div>
+        <div class="subtabs">
+          <button class="active" data-sub="pr-list" data-t="pr_installed"></button>
+          <button data-sub="pr-updates" data-t="pr_updates"></button>
+        </div>
+        <div id="sub-pr-list" class="subpane active">
+          <div class="toolbar">
+            <input id="prSearch" class="input grow" data-tp="pr_search_ph">
+            <select id="prSort" class="input"></select>
+            <button class="btn" id="prReload" data-t="refresh"></button>
+          </div>
+          <div class="toolbar actionbar"><span class="muted small grow" id="prStats"></span><button class="btn" id="prQuiet" disabled></button></div>
+          <div id="prList"></div>
+        </div>
+        <div id="sub-pr-updates" class="subpane">
+          <div class="card warn-card"><div class="warn-text"><b data-t="pr_upd_title"></b><span class="muted" data-t="pr_upd_help"></span></div>
+            <div class="warn-actions"><button class="btn" id="upCheck" data-t="pr_upd_check"></button><button class="btn btn-accent" id="upAll" data-t="pr_upd_all" disabled></button></div></div>
+          <div id="upList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- СЛУЖБЫ И ЗАДАЧИ -->
+    <section class="page" id="page-services">
+      <div id="servicesUnsupported" class="card hidden"><p data-t="win_only"></p></div>
+      <div id="servicesMain" class="stack">
+        <div class="policy-note hidden" data-rule="services"></div>
+        <div class="subtabs">
+          <button class="active" data-sub="sv-services" data-t="sv_services"></button>
+          <button data-sub="sv-tasks" data-t="sv_tasks"></button>
+        </div>
+        <div id="sub-sv-services" class="subpane active">
+          <div class="toolbar">
+            <input id="svSearch" class="input grow" data-tp="as_search_ph">
+            <label class="check"><input type="checkbox" id="svThird" checked><span data-t="sv_third"></span></label>
+            <label class="check"><input type="checkbox" id="svRunning"><span data-t="sv_running"></span></label>
+            <button class="btn" id="svReload" data-t="refresh"></button>
+          </div>
+          <div class="muted small" id="svStats"></div>
+          <div id="svList"></div>
+        </div>
+        <div id="sub-sv-tasks" class="subpane">
+          <div class="toolbar">
+            <input id="tkSearch" class="input grow" data-tp="as_search_ph">
+            <label class="check"><input type="checkbox" id="tkHideMs" checked><span data-t="tk_hide_ms"></span></label>
+            <button class="btn" id="tkReload" data-t="refresh"></button>
+          </div>
+          <div class="muted small" id="tkStats"></div>
+          <div id="tkList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- СЕТЬ -->
+    <section class="page" id="page-network">
+      <div class="grid2">
+        <div class="stack">
+          <div class="card">
+            <div class="card-title" data-t="net_check"></div>
+            <div class="net-verdict" id="netVerdict"><span class="muted" data-t="net_check_hint"></span></div>
+            <div class="toolbar" style="margin-top:10px"><button class="btn btn-accent" id="netCheckBtn" data-t="net_check_run"></button><button class="btn" id="netFlush" data-t="net_flush"></button></div>
+          </div>
+          <div class="card">
+            <div class="card-title" data-t="net_tools"></div>
+            <div class="toolbar"><input id="netHost" class="input grow" value="google.com" spellcheck="false"><input id="netPort" class="input port-input" value="443"></div>
+            <div class="toolbar" style="margin-top:8px"><button class="btn" id="netPing" data-t="net_ping"></button><button class="btn" id="netPortBtn" data-t="net_port"></button><button class="btn" id="netTrace" data-t="net_trace"></button></div>
+            <div class="joblog hidden" id="netOut" style="margin-top:10px"></div>
+            <p class="help" data-t="net_tools_help"></p>
+          </div>
+        </div>
+        <div class="card"><div class="toolbar" style="margin-bottom:6px"><div class="card-title grow" style="margin:0" data-t="net_adapters"></div><button class="btn" id="netReload" data-t="refresh"></button></div><div id="netAdapters"></div></div>
+      </div>
+    </section>
+
+    <!-- СБОИ И СОБЫТИЯ -->
+    <section class="page" id="page-crashes">
+      <div id="crashesUnsupported" class="card hidden"><p data-t="win_only"></p></div>
+      <div id="crashesMain" class="stack">
+        <div class="toolbar"><span class="muted grow" data-t="cr_hint"></span><div class="seg" id="crDays"></div><button class="btn" id="crReload" data-t="refresh"></button></div>
+        <div class="muted small" id="crNote"></div>
+        <div class="grid2">
+          <div class="card"><div class="card-title" data-t="cr_bsod"></div><div id="crBsod"></div></div>
+          <div class="stack">
+            <div class="card"><div class="card-title" data-t="cr_apps"></div><div id="crApps"></div></div>
+            <div class="card"><div class="card-title" data-t="cr_unexp"></div><div id="crUnexp"></div></div>
+          </div>
+        </div>
+        <div class="card"><div class="card-title" data-t="cr_events"></div><div id="crEvents"></div></div>
+      </div>
+    </section>
+
+    <!-- ОТЧЁТ И БЕЗОПАСНОСТЬ -->
+    <section class="page" id="page-report">
+      <div class="grid2">
+        <div class="stack">
+          <div class="card">
+            <div class="card-title" data-t="rp_report"></div>
+            <p class="help" style="margin:0 0 12px" data-t="rp_report_help"></p>
+            <div class="toolbar"><button class="btn btn-accent" id="rpMake" data-t="rp_make"></button><button class="btn" id="rpFolder" data-t="rp_folder"></button></div>
+            <div class="muted small" id="rpLast" style="margin-top:8px"></div>
+          </div>
+          <div class="card">
+            <div class="card-title" data-t="rp_boot"></div>
+            <div id="bootInfo"><span class="muted" data-t="loading"></span></div>
+          </div>
+        </div>
+        <div class="card"><div class="toolbar" style="margin-bottom:6px"><div class="card-title grow" style="margin:0" data-t="rp_security"></div><button class="btn" id="secReload" data-t="refresh"></button></div><div id="secList"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title" data-t="rp_admin"></div>
+        <div id="policyInfo" class="muted small"></div>
+        <p class="help" data-t="rp_admin_help"></p>
+        <pre class="cli-help" id="cliHelp"></pre>
+        <div class="toolbar"><button class="btn" id="polTemplate" data-t="rp_policy_tpl"></button><button class="btn" id="openLogs" data-t="rp_logs"></button></div>
+      </div>
+    </section>
+
+    <!-- ИСТОРИЯ И ЖУРНАЛ -->
+    <section class="page" id="page-history">
+      <div class="subtabs">
+        <button class="active" data-sub="hi-changes" data-t="hi_changes"></button>
+        <button data-sub="hi-log" data-t="nav_log"></button>
+      </div>
+      <div id="sub-hi-changes" class="subpane active">
+        <div class="toolbar"><span class="muted grow" data-t="hi_hint"></span><input id="hiSearch" class="input" data-tp="as_search_ph"><select id="hiArea" class="input"></select><button class="btn" id="hiClear" data-t="hi_clear"></button></div>
+        <div id="hiList"></div>
+      </div>
+      <div id="sub-hi-log" class="subpane">
+        <div class="toolbar"><span class="muted grow" data-t="log_hint"></span><button class="btn" id="openLogs2" data-t="rp_logs"></button><button class="btn" id="clearLog" data-t="clear_log"></button></div>
+        <div class="card log-card"><div id="logList" class="log"></div></div>
+      </div>
+    </section>
+
+    <!-- НАСТРОЙКИ -->
+    <section class="page" id="page-settings">
+      <div class="card">
+        <div class="card-title" data-t="appearance"></div>
+        <div class="form">
+          <label data-t="language"></label><div class="seg" id="langSeg"><button data-v="ru">Русский</button><button data-v="en">English</button></div>
+          <label data-t="theme"></label><div class="seg" id="themeSeg"><button data-v="dark" data-t="theme_dark"></button><button data-v="light" data-t="theme_light"></button></div>
+          <label data-t="opacity"></label><div class="range-row"><input type="range" id="opacity" min="40" max="100" step="5"><span id="opacityLbl"></span></div>
+        </div>
+        <label class="switch-row" style="margin-top:6px"><span class="switch"><input type="checkbox" id="acrylic"><i></i></span><span data-t="acrylic"></span></label>
+        <p class="help" data-t="acrylic_help"></p>
+      </div>
+      <div class="card">
+        <div class="card-title" data-t="background"></div>
+        <label class="switch-row"><span class="switch"><input type="checkbox" id="closeTray"><i></i></span><span data-t="close_tray"></span></label>
+        <label class="switch-row"><span class="switch"><input type="checkbox" id="runStartup"><i></i></span><span data-t="run_startup"></span></label>
+        <p class="help" data-t="background_help"></p>
+      </div>
+      <div class="card">
+        <div class="card-title" data-t="params"></div>
+        <div class="form">
+          <label data-t="interval"></label><select id="interval" class="input"></select>
+          <label data-t="temp_age"></label><select id="tempAge" class="input"></select>
+          <label data-t="hog_thr"></label><div class="range-row"><input type="range" id="hogThr" min="20" max="100" step="10"><span id="hogLbl"></span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" data-t="gamemode"></div>
+        <label class="switch-row"><span class="switch"><input type="checkbox" id="gameMode"><i></i></span><span data-t="gamemode_on"></span></label>
+        <p class="help" data-t="gamemode_help"></p>
+        <div class="games-add"><input id="gameInput" class="input grow" data-tp="game_ph"><button class="btn" id="gameAdd" data-t="add"></button></div>
+        <div id="gamesList" class="chips"></div>
+      </div>
+      <div class="card">
+        <div class="card-title" data-t="notif_updates"></div>
+        <label class="switch-row"><span class="switch"><input type="checkbox" id="notify"><i></i></span><span data-t="notify_on"></span></label>
+        <label class="switch-row"><span class="switch"><input type="checkbox" id="autoUpdate"><i></i></span><span data-t="autoupdate_on"></span></label>
+        <div class="row2" style="margin-top:10px"><button class="btn" id="checkUpdate" data-t="check_update"></button><span id="updateMsg" class="muted" style="align-self:center"></span></div>
+      </div>
+      <div class="card">
+        <div class="card-title" data-t="profile"></div>
+        <p class="help" data-t="profile_help"></p>
+        <div class="row2"><button class="btn" id="exportProfile" data-t="export_profile"></button><button class="btn" id="importProfile" data-t="import_profile"></button></div>
+        <input type="file" id="importFile" accept="application/json,.json" class="hidden">
+      </div>
+      <div class="card"><div class="card-title" data-t="about"></div><div class="kv" id="about"></div><p class="help" data-t="about_rights"></p></div>
+    </section>
+  </main>
+
+  <footer class="status"><span id="status"></span><div class="status-right"><span id="appVer" class="muted small"></span><a id="ghLink" class="gh" title="github.com/healcore">github.com/healcore</a><span id="clock"></span></div></footer>
+</div>
+
+<div id="modal" class="modal hidden"><div class="modal-box"><div class="modal-title" id="mTitle"></div><div class="modal-body" id="mBody"></div><div class="modal-foot"><button class="btn" id="mCancel"></button><button class="btn btn-accent" id="mOk"></button></div></div></div>
+<div id="toasts"></div>
+<div id="palette" class="palette hidden"><div class="palette-box"><input id="palInput" class="palette-input" spellcheck="false" autocomplete="off"><div id="palList" class="palette-list"></div><div class="palette-foot muted small" data-t="pal_foot"></div></div></div>
+<script src="i18n.js"></script>
+<script src="i18n2.js"></script>
+<script src="app.js"></script>
+<script src="app2.js"></script>
+</body>
+</html>

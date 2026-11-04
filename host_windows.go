@@ -90,27 +90,11 @@ func handoffToRunningInstance() bool {
 	}
 }
 
-func setDarkTitle(hwnd uintptr, dark bool) {
-	if procDwmSetAttr.Find() != nil {
-		return
-	}
-	var v int32
-	if dark {
-		v = 1
-	}
-	// 20 — DWMWA_USE_IMMERSIVE_DARK_MODE (Windows 10 20H1+), 19 — ранние сборки.
-	if r, _, _ := procDwmSetAttr.Call(hwnd, 20, uintptr(unsafe.Pointer(&v)), 4); r != 0 {
-		procDwmSetAttr.Call(hwnd, 19, uintptr(unsafe.Pointer(&v)), 4)
-	}
-	// SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_FRAMECHANGED — перерисовать рамку.
-	procSetWindowPos.Call(hwnd, 0, 0, 0, 0, 0, 0x0002|0x0001|0x0004|0x0020)
-}
-
 func runHost(c *core.Core, url string) {
 	dark := c.Config().Theme == "dark"
-	// Прозрачный фон WebView2: при включённом размытии подложка видна сквозь
-	// полупрозрачные панели; в обычном режиме фон рисует сам HTML (непрозрачно).
-	os.Setenv("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", "00FFFFFF")
+	// Прозрачный фон WebView2 (альфа 0, цвет тёмный — без светлой каймы):
+	// сквозь него виден системный Acrylic; без прозрачности фон рисует сам HTML.
+	os.Setenv("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", "000C0C0E")
 
 	scale := 1.0
 	if procGetDpi.Find() == nil {
@@ -146,7 +130,7 @@ func runHost(c *core.Core, url string) {
 	defer wv.Destroy()
 
 	hwnd := uintptr(wv.Window())
-	setDarkTitle(hwnd, dark)
+	applyAppearance(hwnd, c.Config().Opacity, dark)
 
 	// Фоновый режим: значок в трее, сворачивание вместо закрытия, уведомления.
 	cfg := c.Config()
@@ -156,33 +140,16 @@ func runHost(c *core.Core, url string) {
 	subclass(hwnd)
 	_ = autostart.SetSelfStartup(cfg.RunAtStartup) // сверяем запись автозапуска
 
-	c.OnTheme = func(d bool) {
-		wv.Dispatch(func() {
-			setDarkTitle(hwnd, d)
-			if cc := c.Config(); cc.Acrylic {
-				applyBackdrop(hwnd, true, cc.Backdrop, d) // перекрасить фон под новую тему
-			}
-		})
-	}
+	c.OnTheme = func(d bool) { wv.Dispatch(func() { applyAppearance(hwnd, c.Config().Opacity, d) }) }
 	c.OnQuit = func() { wv.Dispatch(requestQuit) }
 	c.OnNotify = func(title, text string) { wv.Dispatch(func() { notifyBalloon(title, text) }) }
-	// Системный фон (Mica / Acrylic) рисует Windows; ползунок плотности
-	// меняет только затемнение интерфейса поверх него (в CSS).
-	if b := windowsBuild(); b >= 22000 {
-		c.Backdrops = []string{"mica", "acrylic"}
-	} else if b >= 17134 {
+	if glassSupported() {
 		c.Backdrops = []string{"acrylic"}
 	}
-	c.OnOpacity = func(int) {}
-	c.OnAcrylic = func(bool) {
-		wv.Dispatch(func() {
-			cc := c.Config()
-			applyBackdrop(hwnd, cc.Acrylic, cc.Backdrop, cc.Theme == "dark")
-		})
+	c.OnOpacity = func(pct int) {
+		wv.Dispatch(func() { applyAppearance(hwnd, pct, c.Config().Theme == "dark") })
 	}
-	if cfg.Acrylic {
-		applyBackdrop(hwnd, true, cfg.Backdrop, dark)
-	}
+	c.OnAcrylic = func(bool) {}
 	// Запуск из автозагрузки с ключом --minimized: сразу в трей.
 	if minimizedStart() && cfg.CloseToTray {
 		procShowWindow.Call(hwnd, swHide)
@@ -222,4 +189,3 @@ func fatal(msg string) {
 	windows.MessageBox(0, t, cp, windows.MB_ICONERROR)
 	os.Exit(1)
 }
-

@@ -23,7 +23,7 @@ type Config struct {
 	Rules         []rules.Rule `json:"rules"`
 
 	// Внешний вид окна
-	Opacity int  `json:"opacity"` // прозрачность окна, % (40–100)
+	Opacity int  `json:"opacity"` // непрозрачность фона окна, % (20–100; 100 — без прозрачности)
 	Acrylic bool `json:"acrylic"` // системный фон окна (как в Windows 11)
 	// Backdrop — вид системного фона: mica (как Параметры и Проводник Windows 11)
 	// или acrylic (полупрозрачное размытое стекло, сквозь него видны окна).
@@ -119,7 +119,7 @@ func (c *Config) Normalize() {
 	if c.Backdrop != "mica" && c.Backdrop != "acrylic" {
 		c.Backdrop = "acrylic"
 	}
-	if c.Opacity < 40 || c.Opacity > 100 {
+	if c.Opacity < 20 || c.Opacity > 100 {
 		c.Opacity = 100
 	}
 	if c.Schedule.Day < 0 || c.Schedule.Day > 7 {

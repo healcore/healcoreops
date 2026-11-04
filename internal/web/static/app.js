@@ -827,8 +827,7 @@ function renderSettingsPage() {
   $("autoRules").checked = CFG.auto_rules; $("autoTrim").checked = CFG.auto_trim;
   $("thr").value = CFG.trim_threshold; $("thrLbl").textContent = t("thr_lbl", CFG.trim_threshold);
   $("gameMode").checked = CFG.game_mode; $("notify").checked = CFG.notify; $("autoUpdate").checked = CFG.auto_update_check;
-  $("opacity").value = CFG.opacity || 100; $("opacityLbl").textContent = (CFG.opacity || 100) + "%";
-  $("acrylic").checked = CFG.acrylic;
+  applyAcrylicClass();
   $("closeTray").checked = CFG.close_to_tray; $("runStartup").checked = CFG.run_at_startup;
   renderGames();
   if (!state.tempScan) $("tempInfo").textContent = t("temp_none_yet", CFG.temp_age_days);
@@ -843,6 +842,7 @@ document.querySelectorAll("#langSeg button").forEach(b => b.onclick = async () =
 });
 document.querySelectorAll("#themeSeg button").forEach(b => b.onclick = async () => {
   document.documentElement.dataset.theme = b.dataset.v;
+  applyAcrylicClass(); // полупрозрачные фоны — из цветов новой темы
   await setCfg({ theme: b.dataset.v });
   renderSettingsPage();
   Object.values(sparks).forEach(s => s.draw());
@@ -866,42 +866,47 @@ function renderGames() {
 $("gameMode").onchange = () => setCfg({ game_mode: $("gameMode").checked });
 $("notify").onchange = () => setCfg({ notify: $("notify").checked });
 $("autoUpdate").onchange = () => setCfg({ auto_update_check: $("autoUpdate").checked });
-// Системный фон Windows 11: материал рисует Windows, ползунок задаёт
-// затемнение слоёв интерфейса поверх него (40 — максимум материала).
-function applyGlass(level, on) {
-  const v = Math.max(40, Math.min(100, Number(level) || 100));
-  const k = (v - 40) / 60;
-  const r = document.documentElement.style;
-  const pct = (lo, hi) => (lo + (hi - lo) * k).toFixed(1) + "%";
-  r.setProperty("--g-bg", pct(0, 55));
-  r.setProperty("--g-card", pct(40, 88));
-  r.setProperty("--g-ctl", pct(55, 92));
-  const ok = !!on && (HOST.backdrops || []).length > 0;
-  document.documentElement.toggleAttribute("data-acrylic", ok);
+// Прозрачность «как в Windows» (подход healcore-project): окно включает системный
+// Acrylic, здесь полупрозрачными становятся только фоны. Вес слоя: 0 — фон окна
+// просвечивает сильнее всего, панели и поля плотнее, чтобы текст читался.
+const GLASS_VARS = { "--bg": 0, "--panel": 0.5, "--panel2": 0.55 };
+function hexToRgb(h) {
+  h = h.trim().replace("#", "");
+  if (h.length === 3) h = h.split("").map(c => c + c).join("");
+  const n = parseInt(h.slice(0, 6), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+const glassNative = () => !!(window.chrome && window.chrome.webview) && (HOST.backdrops || []).length > 0;
+function applyGlass(opacity) {
+  const root = document.documentElement;
+  for (const v of [...Object.keys(GLASS_VARS), "--panel-solid"]) root.style.removeProperty(v);
+  const a = Math.max(20, Math.min(100, Number(opacity) || 100)) / 100;
+  const on = glassNative() && a < 1;
+  root.toggleAttribute("data-acrylic", on);
+  if (!on) return;
+  const cs = getComputedStyle(root);
+  root.style.setProperty("--panel-solid", cs.getPropertyValue("--panel").trim());
+  for (const [v, k] of Object.entries(GLASS_VARS)) {
+    const [r, g, b] = hexToRgb(cs.getPropertyValue(v));
+    root.style.setProperty(v, `rgba(${r},${g},${b},${(a + (1 - a) * k).toFixed(3)})`);
+  }
 }
 function applyAcrylicClass() {
-  applyGlass(CFG.opacity || 100, CFG.acrylic);
-  const has = (HOST.backdrops || []);
-  $("acrylic").disabled = !has.length;
-  $("opacity").disabled = !CFG.acrylic;
-  $("backdropRow").classList.toggle("hidden", !has.length);
-  document.querySelectorAll("#backdropSeg button").forEach(b => {
-    b.disabled = !has.includes(b.dataset.v);
-    b.classList.toggle("on", b.dataset.v === (has.includes(CFG.backdrop) ? CFG.backdrop : has[0]));
-  });
+  applyGlass(CFG.opacity || 100);
+  const tr = 100 - (CFG.opacity || 100);
+  $("opacity").value = tr; $("opacityLbl").textContent = tr + "%";
+  $("opacity").disabled = !glassNative();
+  $("opacityHelp").textContent = t(glassNative() ? "opacity_help" : "opacity_only_app");
 }
-$("opacity").oninput = () => { $("opacityLbl").textContent = $("opacity").value + "%"; applyGlass($("opacity").value, CFG.acrylic); };
-$("opacity").onchange = async () => { await setCfg({ opacity: Number($("opacity").value) }); applyAcrylicClass(); };
-$("acrylic").onchange = async () => {
-  const on = $("acrylic").checked, patch = { acrylic: on };
-  if (on && (CFG.opacity || 100) >= 100) patch.opacity = 70; // сразу видно материал
-  await setCfg(patch);
-  $("opacity").value = CFG.opacity; $("opacityLbl").textContent = CFG.opacity + "%";
-  applyAcrylicClass();
+let opTimer = null;
+$("opacity").oninput = () => {
+  const tr = Number($("opacity").value);
+  $("opacityLbl").textContent = tr + "%";
+  applyGlass(100 - tr);
+  clearTimeout(opTimer); // страница — сразу, окно и сохранение — после короткой паузы
+  opTimer = setTimeout(() => setCfg({ opacity: 100 - tr }), 120);
 };
-document.querySelectorAll("#backdropSeg button").forEach(b => b.onclick = async () => {
-  await setCfg({ backdrop: b.dataset.v }); applyAcrylicClass();
-});
+$("opacity").onchange = async () => { clearTimeout(opTimer); await setCfg({ opacity: 100 - Number($("opacity").value) }); applyAcrylicClass(); };
 $("closeTray").onchange = () => setCfg({ close_to_tray: $("closeTray").checked });
 $("runStartup").onchange = async () => { await setCfg({ run_at_startup: $("runStartup").checked }); toast($("runStartup").checked ? t("startup_on") : t("startup_off")); };
 async function addGame() {

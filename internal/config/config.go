@@ -24,7 +24,10 @@ type Config struct {
 
 	// Внешний вид окна
 	Opacity int  `json:"opacity"` // прозрачность окна, % (40–100)
-	Acrylic bool `json:"acrylic"` // размытие фона (как в Windows 11)
+	Acrylic bool `json:"acrylic"` // системный фон окна (как в Windows 11)
+	// Backdrop — вид системного фона: mica (как Параметры и Проводник Windows 11)
+	// или acrylic (полупрозрачное размытое стекло, сквозь него видны окна).
+	Backdrop string `json:"backdrop"`
 
 	// Фоновая работа
 	CloseToTray  bool `json:"close_to_tray"`  // при закрытии окна — сворачивать в трей
@@ -112,6 +115,9 @@ func (c *Config) Normalize() {
 	}
 	if c.HogThreshold < 10 || c.HogThreshold > 100 {
 		c.HogThreshold = 50
+	}
+	if c.Backdrop != "mica" && c.Backdrop != "acrylic" {
+		c.Backdrop = "acrylic"
 	}
 	if c.Opacity < 40 || c.Opacity > 100 {
 		c.Opacity = 100

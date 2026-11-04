@@ -8,15 +8,22 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-// Эффект размытия «как в Windows 11» через SetWindowCompositionAttribute
-// (ACCENT_ENABLE_ACRYLICBLURBEHIND). Работает и на Windows 10 (1803+),
-// и на Windows 11 — единый путь, адаптированный под обе системы.
+// Системный фон окна — так же, как у приложений Windows 11:
+//
+//   - Windows 11 22H2+: DWM рисует Mica или Acrylic (DWMWA_SYSTEMBACKDROP_TYPE),
+//     рамка растянута на всё окно (DwmExtendFrameIntoClientArea), WebView2
+//     прозрачен — интерфейс лежит прямо на системном материале. Размытие,
+//     тон, шум и переход в плотный цвет у неактивного окна делает сама Windows.
+//   - Windows 11 21H2: Mica через DWMWA_MICA_EFFECT.
+//   - Windows 10: размытие через SetWindowCompositionAttribute (у Windows 10
+//     нет Mica, поэтому всегда акрил).
 
 var (
 	ntdll              = windows.NewLazySystemDLL("ntdll.dll")
 	procRtlGetVersion  = ntdll.NewProc("RtlGetVersion")
 	procSetWinCompAttr = user32.NewProc("SetWindowCompositionAttribute")
 	procDwmSetAttr2    = dwmapi.NewProc("DwmSetWindowAttribute")
+	procDwmExtend      = dwmapi.NewProc("DwmExtendFrameIntoClientArea")
 )
 
 type osVersionInfo struct {
@@ -48,28 +55,35 @@ type winCompAttrData struct {
 	SizeOfData uintptr
 }
 
+type dwmMargins struct{ Left, Right, Top, Bottom int32 }
+
 const (
 	wcaAccentPolicy         = 19
 	accentDisabled          = 0
 	accentEnableAcrylicBlur = 4
-	dwmSystemBackdropType   = 38 // Windows 11: DWMWA_SYSTEMBACKDROP_TYPE
-	dwmBackdropAcrylic      = 3  // DWMSBT_TRANSIENTWINDOW
-	dwmBackdropNone         = 1  // DWMSBT_NONE
+	dwmSystemBackdropType   = 38   // DWMWA_SYSTEMBACKDROP_TYPE (22H2+)
+	dwmMicaEffect           = 1029 // DWMWA_MICA_EFFECT (21H2)
+	dwmBackdropNone         = 1    // DWMSBT_NONE
+	dwmBackdropMica         = 2    // DWMSBT_MAINWINDOW
+	dwmBackdropAcrylic      = 3    // DWMSBT_TRANSIENTWINDOW
 )
 
-// applyAcrylic включает или выключает размытие фона окна.
-// level — «плотность стекла» 40–100 (из настройки прозрачности): чем меньше,
-// тем сильнее просвечивает размытый фон. Текст при этом не становится прозрачным.
-func applyAcrylic(hwnd uintptr, on, dark bool, level int) {
-	// Windows 11 22H2+ — «правильный» системный фон через DWM.
-	if windowsBuild() >= 22621 && procDwmSetAttr2.Find() == nil {
-		v := int32(dwmBackdropNone)
-		if on {
-			v = dwmBackdropAcrylic
-		}
-		procDwmSetAttr2.Call(hwnd, dwmSystemBackdropType, uintptr(unsafe.Pointer(&v)), 4)
+func dwmSet(hwnd uintptr, attr uint32, v int32) {
+	procDwmSetAttr2.Call(hwnd, uintptr(attr), uintptr(unsafe.Pointer(&v)), 4)
+}
+
+func extendFrame(hwnd uintptr, on bool) {
+	if procDwmExtend.Find() != nil {
+		return
 	}
-	// Универсальный акрил (Windows 10 и 11) через композицию.
+	m := dwmMargins{}
+	if on {
+		m = dwmMargins{-1, -1, -1, -1} // «лист стекла» на всё окно
+	}
+	procDwmExtend.Call(hwnd, uintptr(unsafe.Pointer(&m)))
+}
+
+func setAccent(hwnd uintptr, on, dark bool) {
 	if procSetWinCompAttr.Find() != nil {
 		return
 	}
@@ -77,28 +91,46 @@ func applyAcrylic(hwnd uintptr, on, dark bool, level int) {
 	if on {
 		a.AccentState = accentEnableAcrylicBlur
 		a.AccentFlags = 2
-		// Тон подложки: AABBGGRR, строго нейтральный серый. Тонировка плотная,
-		// поэтому обои под окном видны лишь как светотень — без цвета,
-		// интерфейс остаётся чёрно-серым на любом рабочем столе.
-		alpha := glassTint(level)
+		// AABBGGRR: нейтральный серый тон, как у акрила Windows 11.
 		if dark {
-			a.GradientColor = alpha<<24 | 0x111111
+			a.GradientColor = 0x99202020
 		} else {
-			a.GradientColor = alpha<<24 | 0xF0F0F0
+			a.GradientColor = 0x99F3F3F3
 		}
 	}
 	data := winCompAttrData{Attribute: wcaAccentPolicy, Data: unsafe.Pointer(&a), SizeOfData: unsafe.Sizeof(a)}
 	procSetWinCompAttr.Call(hwnd, uintptr(unsafe.Pointer(&data)))
 }
 
-// glassTint — непрозрачность тона подложки (0–255) для уровня 40–100.
-func glassTint(level int) uint32 {
-	if level < 40 {
-		level = 40
+// applyBackdrop включает или выключает системный фон окна. Тон (тёмный или
+// светлый) Windows берёт из DWMWA_USE_IMMERSIVE_DARK_MODE (setDarkTitle).
+func applyBackdrop(hwnd uintptr, on bool, kind string, dark bool) {
+	b := windowsBuild()
+	switch {
+	case b >= 22621 && procDwmSetAttr2.Find() == nil:
+		setAccent(hwnd, false, dark) // старый акрил Windows 10 мешает родному — снять
+		v := int32(dwmBackdropNone)
+		if on {
+			v = dwmBackdropAcrylic
+			if kind == "mica" {
+				v = dwmBackdropMica
+			}
+		}
+		extendFrame(hwnd, on)
+		dwmSet(hwnd, dwmSystemBackdropType, v)
+	case b >= 22000 && kind == "mica" && procDwmSetAttr2.Find() == nil:
+		setAccent(hwnd, false, dark)
+		extendFrame(hwnd, on)
+		v := int32(0)
+		if on {
+			v = 1
+		}
+		dwmSet(hwnd, dwmMicaEffect, v)
+	default:
+		if b >= 22000 && procDwmSetAttr2.Find() == nil {
+			dwmSet(hwnd, dwmMicaEffect, 0)
+			extendFrame(hwnd, false)
+		}
+		setAccent(hwnd, on, dark)
 	}
-	if level > 100 {
-		level = 100
-	}
-	// 40 % → 0xDC (≈86 %), 100 % → 0xF2 (≈95 %)
-	return uint32(0xDC + (0xF2-0xDC)*(level-40)/60)
 }

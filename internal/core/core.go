@@ -20,7 +20,7 @@ import (
 )
 
 // Version — версия приложения.
-const Version = "1.8.4"
+const Version = "1.8.5"
 
 // Уровни записей журнала.
 const (
@@ -63,6 +63,8 @@ type Core struct {
 	OnNotify func(title, text string)
 	// OnOpacity меняет прозрачность окна (40–100 %).
 	OnOpacity func(pct int)
+	// Backdrops — виды системного фона окна, доступные на этой ОС (mica, acrylic).
+	Backdrops []string
 	// OnAcrylic включает/выключает размытие фона окна.
 	OnAcrylic func(on bool)
 

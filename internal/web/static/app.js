@@ -866,22 +866,42 @@ function renderGames() {
 $("gameMode").onchange = () => setCfg({ game_mode: $("gameMode").checked });
 $("notify").onchange = () => setCfg({ notify: $("notify").checked });
 $("autoUpdate").onchange = () => setCfg({ auto_update_check: $("autoUpdate").checked });
-// Стекло: ползунок 40–100 задаёт плотность фонов (текст не прозрачен).
-function applyGlass(level, acrylic) {
+// Системный фон Windows 11: материал рисует Windows, ползунок задаёт
+// затемнение слоёв интерфейса поверх него (40 — максимум материала).
+function applyGlass(level, on) {
   const v = Math.max(40, Math.min(100, Number(level) || 100));
-  const k = (v - 40) / 60; // 0 — максимально прозрачно, 1 — почти плотно
+  const k = (v - 40) / 60;
   const r = document.documentElement.style;
   const pct = (lo, hi) => (lo + (hi - lo) * k).toFixed(1) + "%";
-  r.setProperty("--g-bg", pct(55, 90));
-  r.setProperty("--g-side", pct(72, 94));
-  r.setProperty("--g-card", pct(82, 97));
-  r.setProperty("--g-ctl", pct(88, 98));
-  document.documentElement.toggleAttribute("data-acrylic", !!acrylic || v < 100);
+  r.setProperty("--g-bg", pct(0, 55));
+  r.setProperty("--g-card", pct(40, 88));
+  r.setProperty("--g-ctl", pct(55, 92));
+  const ok = !!on && (HOST.backdrops || []).length > 0;
+  document.documentElement.toggleAttribute("data-acrylic", ok);
 }
-function applyAcrylicClass() { applyGlass(CFG.opacity || 100, CFG.acrylic); }
+function applyAcrylicClass() {
+  applyGlass(CFG.opacity || 100, CFG.acrylic);
+  const has = (HOST.backdrops || []);
+  $("acrylic").disabled = !has.length;
+  $("opacity").disabled = !CFG.acrylic;
+  $("backdropRow").classList.toggle("hidden", !has.length);
+  document.querySelectorAll("#backdropSeg button").forEach(b => {
+    b.disabled = !has.includes(b.dataset.v);
+    b.classList.toggle("on", b.dataset.v === (has.includes(CFG.backdrop) ? CFG.backdrop : has[0]));
+  });
+}
 $("opacity").oninput = () => { $("opacityLbl").textContent = $("opacity").value + "%"; applyGlass($("opacity").value, CFG.acrylic); };
 $("opacity").onchange = async () => { await setCfg({ opacity: Number($("opacity").value) }); applyAcrylicClass(); };
-$("acrylic").onchange = async () => { await setCfg({ acrylic: $("acrylic").checked }); applyAcrylicClass(); };
+$("acrylic").onchange = async () => {
+  const on = $("acrylic").checked, patch = { acrylic: on };
+  if (on && (CFG.opacity || 100) >= 100) patch.opacity = 70; // сразу видно материал
+  await setCfg(patch);
+  $("opacity").value = CFG.opacity; $("opacityLbl").textContent = CFG.opacity + "%";
+  applyAcrylicClass();
+};
+document.querySelectorAll("#backdropSeg button").forEach(b => b.onclick = async () => {
+  await setCfg({ backdrop: b.dataset.v }); applyAcrylicClass();
+});
 $("closeTray").onchange = () => setCfg({ close_to_tray: $("closeTray").checked });
 $("runStartup").onchange = async () => { await setCfg({ run_at_startup: $("runStartup").checked }); toast($("runStartup").checked ? t("startup_on") : t("startup_off")); };
 async function addGame() {

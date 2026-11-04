@@ -159,25 +159,29 @@ func runHost(c *core.Core, url string) {
 	c.OnTheme = func(d bool) {
 		wv.Dispatch(func() {
 			setDarkTitle(hwnd, d)
-			if cc := c.Config(); glassOn(cc.Acrylic, cc.Opacity) {
-				applyAcrylic(hwnd, true, d, cc.Opacity) // перекрасить подложку под новую тему
+			if cc := c.Config(); cc.Acrylic {
+				applyBackdrop(hwnd, true, cc.Backdrop, d) // перекрасить фон под новую тему
 			}
 		})
 	}
 	c.OnQuit = func() { wv.Dispatch(requestQuit) }
 	c.OnNotify = func(title, text string) { wv.Dispatch(func() { notifyBalloon(title, text) }) }
-	// Прозрачность — это «стекло»: просвечивают только фоны панелей, а текст
-	// и элементы остаются чёткими. Поэтому и ползунок, и «размытие» управляют
-	// одним эффектом, а не прозрачностью всего окна.
-	reglass := func() {
-		cc := c.Config()
-		applyAcrylic(hwnd, glassOn(cc.Acrylic, cc.Opacity), cc.Theme == "dark", cc.Opacity)
+	// Системный фон (Mica / Acrylic) рисует Windows; ползунок плотности
+	// меняет только затемнение интерфейса поверх него (в CSS).
+	if b := windowsBuild(); b >= 22000 {
+		c.Backdrops = []string{"mica", "acrylic"}
+	} else if b >= 17134 {
+		c.Backdrops = []string{"acrylic"}
 	}
-	c.OnOpacity = func(int) { wv.Dispatch(reglass) }
-	c.OnAcrylic = func(bool) { wv.Dispatch(reglass) }
-
-	if glassOn(cfg.Acrylic, cfg.Opacity) {
-		applyAcrylic(hwnd, true, dark, cfg.Opacity)
+	c.OnOpacity = func(int) {}
+	c.OnAcrylic = func(bool) {
+		wv.Dispatch(func() {
+			cc := c.Config()
+			applyBackdrop(hwnd, cc.Acrylic, cc.Backdrop, cc.Theme == "dark")
+		})
+	}
+	if cfg.Acrylic {
+		applyBackdrop(hwnd, true, cfg.Backdrop, dark)
 	}
 	// Запуск из автозагрузки с ключом --minimized: сразу в трей.
 	if minimizedStart() && cfg.CloseToTray {
@@ -219,5 +223,3 @@ func fatal(msg string) {
 	os.Exit(1)
 }
 
-// glassOn — включён ли эффект стекла: явно или через ползунок прозрачности.
-func glassOn(acrylic bool, opacity int) bool { return acrylic || (opacity > 0 && opacity < 100) }

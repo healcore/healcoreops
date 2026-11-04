@@ -63,12 +63,16 @@ Running the installer again updates the app and keeps your settings. Uninstall v
 | | |
 |---|---|
 | **PC checkup** | Load, junk, protection, blue screens, app crashes, drivers, disk and battery health, startup, pending reboot — each finding links to a fix |
-| **Disk space** | Largest folders and files with drill-down, browser caches, Windows Update downloads, temp files, error reports, shader caches; system paths are protected; deletions go to the Recycle Bin and can be undone; **scheduled cleanup** |
+| **Load history** | CPU and memory for 3 h – 7 days; hover the chart to see which processes loaded the PC at that moment (“what was slow yesterday at 2 pm”) |
+| **Hardware health** | Drive SMART (wear, temperature, power-on hours, read/write errors), battery wear and cycles, NVIDIA GPU temperature, fan and power draw |
+| **Disk space** | **Duplicate finder** by content (SHA-256), largest folders and files with drill-down, browser caches, Windows Update downloads, temp files, error reports, shader caches; system paths are protected; deletions go to the Recycle Bin and can be undone; **scheduled cleanup** |
 | **Programs** | All installed programs, uninstall, silent bulk uninstall, leftover finder, updates via winget |
 | **Crashes & errors** | Blue screens from dumps and logs **with a decoded code and advice**, unexpected shutdowns, app crashes and hangs, frequent log errors |
 | **Tweaks** | 58 tweaks in 10 groups and removal of ~45 built-in apps, “apply recommended”, restore point, side-effect warnings |
 | **Services & tasks** | Services (third-party filter, startup type, start/stop) and Task Scheduler; vital services are protected |
-| **Network** | Internet check with a verdict, adapters, TCP ping, port check, traceroute |
+| **Network** | Internet check with a verdict, adapters, ping, port check, traceroute; **per-program connections** with host names; **open ports** — who can reach them and whether the firewall lets them through |
+| **Windows Update** | Available updates with selective install, install history **with decoded error codes**, pause for 7–35 days with undo |
+| **System snapshots** | Take a “before” snapshot and compare with now: what was added to programs, startup, services, tasks, drivers and open ports |
 | **Report & security** | Antivirus, firewall, BitLocker, updates, UAC, Secure Boot, SMBv1, RDP; boot time and what slows it; HTML/JSON computer report |
 | **History** | Every change with an Undo button, plus the action log |
 | **Also** | Live overview, processes and priority rules, drivers from official sources, registry healer with `.reg` backups, maintenance (SFC, DISM, Winsock, DNS), **Ctrl+K** command palette, game mode, tray mode with quick actions, profile export/import, dark & light themes |
@@ -95,6 +99,7 @@ HealCoreOps.exe --apply profile.json [--prefs]   :: apply a profile (tweaks and 
 HealCoreOps.exe --export-profile profile.json    :: save the current profile
 HealCoreOps.exe --report [report.html|.json]     :: computer report
 HealCoreOps.exe --checkup [--json result.json]   :: PC checkup
+HealCoreOps.exe --inventory \\srv\inv\%COMPUTERNAME%.json  :: inventory (.json — everything, .csv — one row in a shared fleet table)
 HealCoreOps.exe --clean                          :: quick cleanup
 HealCoreOps.exe --maintenance sfc                :: maintenance (--list-maintenance)
 HealCoreOps.exe --tweak telemetry=on             :: tweaks (--list-tweaks)
@@ -102,6 +107,16 @@ HealCoreOps.exe --tweak telemetry=on             :: tweaks (--list-tweaks)
 ```
 
 Exit codes: `0` success, `1` error, `2` partial / problems found, `3` blocked by policy, `64` bad arguments.
+
+**Fleet inventory without a server.** `--inventory` with a `.csv` path appends this PC's row to a shared table
+(the same PC's row is replaced; concurrent writes from many machines are lock-protected). Run it via Group Policy to get
+a summary: OS, hardware, free space, worst drive, battery wear, pending reboot, security issues, last update, failed updates,
+exposed remote-access ports and active alerts.
+
+**Alerts for monitoring.** While the app runs (including in the tray) it checks thresholds every 2 minutes: low disk space,
+drive SMART errors and wear, drive and GPU overheating, memory full for 10+ minutes, battery wear, pending reboot and stopped
+watched services. A new alert shows a notification and writes to the **Application** log, source `HealCoreOps`:
+`2000` — warning, `2001` — problem (changes made by the app use `1000`). Collect them with Zabbix, PRTG, Wazuh or Windows Event Forwarding.
 
 **Policies** — `HKLM\SOFTWARE\Policies\HealCoreOps`: `ReadOnly`, `DisableTweaks`, `DisableDefenderTweak`,
 `DisableRegistryHealer`, `DisableProgramChanges`, `DisableServiceChanges`, `DisableDiskCleanup`, `DisableDriverInstall`,

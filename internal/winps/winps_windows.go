@@ -4,6 +4,7 @@
 package winps
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/base64"
@@ -18,19 +19,65 @@ import (
 	"github.com/healcore/healcoreops/internal/i18n"
 )
 
-// Run выполняет скрипт и возвращает stdout.
-func Run(script string, timeout time.Duration) ([]byte, error) {
+func encoded(script string) string {
 	full := "$ProgressPreference='SilentlyContinue'\n$ErrorActionPreference='Continue'\n[Console]::OutputEncoding=[Text.Encoding]::UTF8\n" + script
 	u := utf16.Encode([]rune(full))
 	b := make([]byte, len(u)*2)
 	for i, v := range u {
 		b[2*i], b[2*i+1] = byte(v), byte(v>>8)
 	}
+	return base64.StdEncoding.EncodeToString(b)
+}
+
+func command(ctx context.Context, script string) *exec.Cmd {
+	cmd := exec.CommandContext(ctx, "powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
+		"-EncodedCommand", encoded(script))
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
+	return cmd
+}
+
+// Stream выполняет скрипт и передаёт строки вывода по мере появления.
+// В скрипте для немедленного вывода пишите [Console]::Out.WriteLine(...).
+func Stream(script string, timeout time.Duration, line func(string)) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
-		"-EncodedCommand", base64.StdEncoding.EncodeToString(b))
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
+	cmd := command(ctx, script)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	out, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	sc := bufio.NewScanner(out)
+	sc.Buffer(make([]byte, 64<<10), 1<<20)
+	for sc.Scan() {
+		if l := strings.TrimRight(sc.Text(), "\r "); l != "" {
+			line(l)
+		}
+	}
+	err = cmd.Wait()
+	if ctx.Err() == context.DeadlineExceeded {
+		return errors.New(i18n.T("превышено время ожидания"))
+	}
+	if err != nil {
+		if msg := strings.TrimSpace(stderr.String()); msg != "" {
+			if i := strings.IndexByte(msg, '\n'); i > 0 {
+				msg = strings.TrimSpace(msg[:i])
+			}
+			return errors.New(msg)
+		}
+	}
+	return err
+}
+
+// Run выполняет скрипт и возвращает stdout.
+func Run(script string, timeout time.Duration) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	cmd := command(ctx, script)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	out, err := cmd.Output()

@@ -34,8 +34,10 @@ function onPageShow(name, force) {
   if (force && name === "drivers") loadDrivers(true);
   if (force && name === "autostart") loadAutostart(true);
   if (force && name === "tweaks") loadTweaks(true);
+  if (typeof onPageShow3 === "function") onPageShow3(name, force);
 }
 function onSubShow(sub) {
+  if (typeof onSubShow3 === "function") onSubShow3(sub);
   if (sub === "sv-tasks") loadTasks(false);
   if (sub === "pr-updates" && !UPGRADES) $("upList").innerHTML = `<div class="muted" style="padding:16px 4px">${t("pr_upd_intro")}</div>`;
 }

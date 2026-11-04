@@ -3,7 +3,13 @@
 package health
 
 import (
+	"context"
 	"encoding/base64"
+	"os"
+	"path/filepath"
+
+	"golang.org/x/sys/windows"
+
 	"encoding/json"
 	"os/exec"
 	"syscall"
@@ -34,11 +40,12 @@ $vram = (Get-Counter '\GPU Adapter Memory(*)\Dedicated Usage').CounterSamples | 
 $bat = Get-CimInstance Win32_Battery | Select-Object -First 1
 $design = @(Get-CimInstance -Namespace root\wmi -ClassName BatteryStaticData | Select-Object -ExpandProperty DesignedCapacity)
 $full = @(Get-CimInstance -Namespace root\wmi -ClassName BatteryFullChargedCapacity | Select-Object -ExpandProperty FullChargedCapacity)
-$disks = foreach($d in Get-PhysicalDisk){ $r = $d | Get-StorageReliabilityCounter; [pscustomobject]@{ name=$d.FriendlyName; media=[string]$d.MediaType; health=[string]$d.HealthStatus; temp=[int]$r.Temperature; wear=[int]$r.Wear; hours=[int]$r.PowerOnHours } }
+$bc = @(Get-CimInstance -Namespace root\wmi -ClassName BatteryCycleCount | Select-Object -ExpandProperty CycleCount)
+$disks = foreach($d in Get-PhysicalDisk){ $r = $d | Get-StorageReliabilityCounter; [pscustomobject]@{ name=$d.FriendlyName; media=[string]$d.MediaType; health=[string]$d.HealthStatus; size=[int64]$d.Size; temp=[int]$r.Temperature; tmax=[int]$r.TemperatureMax; wear=[int]$r.Wear; hours=[int]$r.PowerOnHours; rerr=[int64]$r.ReadErrorsUncorrected; werr=[int64]$r.WriteErrorsUncorrected } }
 [pscustomobject]@{
   gpuName=[string]$vc.Name; gpuRam=[int64]$vc.AdapterRAM; gpuUse=[int]([math]::Round($use.Sum,0)); vramUsed=[int64]$vram.Sum;
   batPresent=[bool]$bat; batPct=[int]$bat.EstimatedChargeRemaining; batStatus=[int]$bat.BatteryStatus;
-  design=[int64]($design | Select-Object -First 1); full=[int64]($full | Select-Object -First 1);
+  design=[int64]($design | Select-Object -First 1); full=[int64]($full | Select-Object -First 1); cycles=[int]($bc | Select-Object -First 1);
   disks=@($disks)
 } | ConvertTo-Json -Depth 4 -Compress`
 
@@ -53,14 +60,19 @@ type raw struct {
 	BatStatus  int   `json:"batStatus"`
 	Design     int64 `json:"design"`
 	Full       int64 `json:"full"`
+	Cycles     int   `json:"cycles"`
 
 	Disks []struct {
 		Name   string `json:"name"`
 		Media  string `json:"media"`
 		Health string `json:"health"`
+		Size   int64  `json:"size"`
 		Temp   int    `json:"temp"`
+		TMax   int    `json:"tmax"`
 		Wear   int    `json:"wear"`
 		Hours  int    `json:"hours"`
+		RErr   int64  `json:"rerr"`
+		WErr   int64  `json:"werr"`
 	} `json:"disks"`
 }
 
@@ -76,27 +88,38 @@ func collect() (Snapshot, bool) {
 
 	var s Snapshot
 	s.Updated = time.Now().UnixMilli()
+	s.Limited = !elevated()
 	if r.GPUName != "" {
 		u := float64(r.GPUUse)
 		if u > 100 {
 			u = 100
 		}
-		s.GPUs = append(s.GPUs, GPU{Name: r.GPUName, Usage: u, VramUsed: u64(r.VramUsed), VramTotal: u64(r.GPURam)})
+		s.GPUs = append(s.GPUs, GPU{Name: r.GPUName, Usage: u, VramUsed: u64(r.VramUsed), VramTotal: u64(r.GPURam), FanPct: -1})
+	}
+	// NVIDIA: температура, вентилятор, мощность и точный объём видеопамяти — из nvidia-smi.
+	if nv := nvidia(); len(nv) > 0 {
+		s.GPUs = nv
+	}
+	for i := range s.GPUs {
+		s.GPUs[i].Level = GPULevel(s.GPUs[i])
 	}
 	if r.BatPresent {
 		b := Battery{Present: true, Percent: r.BatPct, Charging: r.BatStatus == 2}
 		// Ёмкости в root\wmi даны в мВт·ч.
-		b.DesignWh, b.FullWh = float64(r.Design), float64(r.Full)
+		b.DesignWh, b.FullWh, b.Cycles = float64(r.Design), float64(r.Full), r.Cycles
 		if b.DesignWh > 0 && b.FullWh > 0 && b.FullWh <= b.DesignWh {
 			b.WearPct = (1 - b.FullWh/b.DesignWh) * 100
 		}
+		b.Level = BatteryLevel(b)
 		s.Battery = b
 	}
 	for _, d := range r.Disks {
-		s.Disks = append(s.Disks, Disk{
-			Name: d.Name, Media: mediaType(d.Media), Health: d.Health,
-			TempC: d.Temp, WearPct: d.Wear, PowerOnH: d.Hours,
-		})
+		dk := Disk{
+			Name: d.Name, Media: mediaType(d.Media), Health: d.Health, Size: u64(d.Size),
+			TempC: d.Temp, TempMax: d.TMax, WearPct: d.Wear, PowerOnH: d.Hours, ReadErr: d.RErr, WriteErr: d.WErr,
+		}
+		dk.Level, dk.Reason = DiskLevel(dk)
+		s.Disks = append(s.Disks, dk)
 	}
 	return s, true
 }
@@ -151,3 +174,39 @@ var context_deadline = errTimeout{}
 type errTimeout struct{}
 
 func (errTimeout) Error() string { return "timeout" }
+
+func elevated() bool { return windows.GetCurrentProcessToken().IsElevated() }
+
+// nvidia — показатели видеокарт NVIDIA через официальную утилиту драйвера.
+func nvidia() []GPU {
+	exe := ""
+	for _, p := range []string{
+		filepath.Join(os.Getenv("SystemRoot"), "System32", "nvidia-smi.exe"),
+		filepath.Join(os.Getenv("ProgramFiles"), "NVIDIA Corporation", "NVSMI", "nvidia-smi.exe"),
+	} {
+		if _, err := os.Stat(p); err == nil {
+			exe = p
+			break
+		}
+	}
+	if exe == "" {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, exe, "--query-gpu=name,temperature.gpu,fan.speed,power.draw,utilization.gpu,memory.used,memory.total", "--format=csv,noheader,nounits")
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
+	out, err := cmd.Output()
+	if err != nil {
+		return nil
+	}
+	return ParseNvidiaSMI(string(out))
+}
+
+// CollectNow собирает снимок сразу (для командной строки, где фонового опроса нет).
+func CollectNow() Snapshot {
+	if s, ok := collect(); ok {
+		store(s)
+	}
+	return Get()
+}

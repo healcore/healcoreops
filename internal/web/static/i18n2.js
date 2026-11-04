@@ -146,6 +146,7 @@ Object.assign(DICT, {
   HealCoreOps.exe --apply профиль.json         применить профиль (твики и правила)
   HealCoreOps.exe --report отчёт.html          отчёт о компьютере
   HealCoreOps.exe --checkup --json итог.json   проверка ПК
+  HealCoreOps.exe --inventory парк.csv          инвентаризация (.json — всё о ПК, .csv — строка в таблицу парка)
   HealCoreOps.exe --clean                      быстрая очистка
   HealCoreOps.exe --maintenance sfc            обслуживание (--list-maintenance)
   HealCoreOps.exe --tweak id=on                твик (--list-tweaks)
@@ -157,6 +158,7 @@ Object.assign(DICT, {
   HealCoreOps.exe --apply profile.json         apply a profile (tweaks and rules)
   HealCoreOps.exe --report report.html         computer report
   HealCoreOps.exe --checkup --json result.json PC checkup
+  HealCoreOps.exe --inventory fleet.csv        inventory (.json — everything, .csv — one row in a fleet table)
   HealCoreOps.exe --clean                      quick cleanup
   HealCoreOps.exe --maintenance sfc            maintenance (--list-maintenance)
   HealCoreOps.exe --tweak id=on                tweak (--list-tweaks)

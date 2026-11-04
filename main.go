@@ -41,5 +41,6 @@ func main() {
 
 	url := fmt.Sprintf("http://127.0.0.1:%d/#%s", ln.Addr().(*net.TCPAddr).Port, token)
 	runHost(c, url)
+	c.SaveLoadHistory()
 	os.Exit(0)
 }

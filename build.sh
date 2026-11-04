@@ -5,7 +5,7 @@
 #   ./build.sh          → dist/HealCoreOps-Setup.exe + dist/healcoreops-linux-amd64
 set -e
 cd "$(dirname "$0")"
-VERSION=1.8.7
+VERSION=1.9.0
 export CGO_ENABLED=0
 
 command -v go >/dev/null || { echo "Нужен Go 1.22+: https://go.dev/dl/"; exit 1; }

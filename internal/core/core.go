@@ -14,13 +14,14 @@ import (
 	"github.com/healcore/healcoreops/internal/ctl"
 	"github.com/healcore/healcoreops/internal/health"
 	"github.com/healcore/healcoreops/internal/i18n"
+	"github.com/healcore/healcoreops/internal/loadhist"
 	"github.com/healcore/healcoreops/internal/opt"
 	"github.com/healcore/healcoreops/internal/rules"
 	"github.com/healcore/healcoreops/internal/sys"
 )
 
 // Version — версия приложения.
-const Version = "1.8.7"
+const Version = "1.9.0"
 
 // Уровни записей журнала.
 const (
@@ -62,10 +63,12 @@ type Core struct {
 	// OnNotify показывает системное уведомление (Windows — всплывающее окно из трея).
 	OnNotify func(title, text string)
 
-	notify notifyState
-	gmu    sync.Mutex // защищает game
-	game   gameState
-	update *UpdateInfo
+	notify   notifyState
+	alerts   alertState
+	loadHist *loadhist.Store
+	gmu      sync.Mutex // защищает game
+	game     gameState
+	update   *UpdateInfo
 
 	// Source — кто вносит изменения: ui (окно), cli (командная строка), schedule, policy.
 	Source string
@@ -100,6 +103,8 @@ func (c *Core) Start() {
 	if health.Supported() {
 		health.Start()
 	}
+	go c.alertLoop()
+	c.startLoadHistory()
 }
 
 // Prime делает снимок системы без фонового цикла (командная строка).
@@ -185,6 +190,8 @@ func (c *Core) tick() {
 	}
 	c.gameTick(s, cfg)
 	c.notifyTick(s, cfg)
+	c.memTrack(s, cfg)
+	c.recordLoad(s)
 }
 
 func (c *Core) logEvents(evs []rules.Event) {

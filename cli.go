@@ -26,7 +26,7 @@ const (
 )
 
 var cliCommands = []string{"--help", "-h", "/?", "--apply", "--export-profile", "--report", "--checkup", "--clean",
-	"--maintenance", "--list-tweaks", "--tweak", "--list-maintenance", "--version"}
+	"--maintenance", "--list-tweaks", "--tweak", "--list-maintenance", "--version", "--inventory"}
 
 // isCLI — запущены ли с командой (без окна).
 func isCLI(args []string) bool {
@@ -91,6 +91,9 @@ func usage() string {
   HealCoreOps.exe --export-profile profile.json    сохранить текущий профиль
   HealCoreOps.exe --report [отчёт.html|.json]      отчёт о компьютере (по умолчанию — в «Документы\HealCoreOps»)
   HealCoreOps.exe --checkup [--json итог.json]     проверка ПК; код 0 — всё хорошо, 2 — есть проблемы
+  HealCoreOps.exe --inventory путь.json|путь.csv   инвентаризация: .json — всё о ПК, .csv — строка в общую
+                                                   таблицу парка; %COMPUTERNAME% в пути — имя компьютера.
+                                                   Пример: --inventory \\server\inv\%COMPUTERNAME%.json
   HealCoreOps.exe --clean                          быстрая очистка (временные файлы, отчёты, эскизы)
   HealCoreOps.exe --maintenance sfc                операция обслуживания (список: --list-maintenance)
   HealCoreOps.exe --tweak id=on --tweak id2=off    включить/выключить твики (список: --list-tweaks)
@@ -104,6 +107,9 @@ func usage() string {
   HealCoreOps.exe --export-profile profile.json    save the current profile
   HealCoreOps.exe --report [report.html|.json]     computer report (default: Documents\HealCoreOps)
   HealCoreOps.exe --checkup [--json result.json]   PC checkup; exit 0 — all good, 2 — problems found
+  HealCoreOps.exe --inventory path.json|path.csv   inventory: .json — everything about the PC, .csv — one row
+                                                   in a shared fleet table; %COMPUTERNAME% in the path is replaced.
+                                                   Example: --inventory \\server\inv\%COMPUTERNAME%.json
   HealCoreOps.exe --clean                          quick cleanup (temp files, error reports, thumbnails)
   HealCoreOps.exe --maintenance sfc                maintenance action (list: --list-maintenance)
   HealCoreOps.exe --tweak id=on --tweak id2=off    turn tweaks on/off (list: --list-tweaks)
@@ -201,6 +207,29 @@ func runCLI(args []string) int {
 			return exitError
 		}
 		out.printf("%s\n", path)
+		return exitOK
+
+	case hasFlag(args, "--inventory"):
+		path, _ := argVal(args, "--inventory")
+		if path == "" {
+			out.printf("%s", usage())
+			return exitUsage
+		}
+		c.Prime()
+		out.printf("%s\n", i18n.Pick("Сбор сведений… (до минуты)", "Collecting data… (up to a minute)"))
+		inv := c.BuildInventory()
+		p, err := core.SaveInventory(inv, path)
+		if err != nil {
+			out.printf("%v\n", err)
+			return exitError
+		}
+		out.printf("%s %s\n", i18n.Pick("Сохранено:", "Saved:"), p)
+		if len(inv.Alerts) > 0 {
+			for _, a := range inv.Alerts {
+				out.printf("  ! %s — %s\n", a.Title, a.Text)
+			}
+			return exitPartial
+		}
 		return exitOK
 
 	case hasFlag(args, "--report"):

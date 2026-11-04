@@ -22,8 +22,6 @@ type Config struct {
 	HogThreshold  int          `json:"hog_threshold"` // % одного ядра
 	Rules         []rules.Rule `json:"rules"`
 
-	// Внешний вид окна
-
 	// Фоновая работа
 	CloseToTray  bool `json:"close_to_tray"`  // при закрытии окна — сворачивать в трей
 	RunAtStartup bool `json:"run_at_startup"` // запускать вместе с Windows (в трее)
@@ -42,6 +40,25 @@ type Config struct {
 
 	// Обслуживание по расписанию (пока программа работает, в т. ч. в трее)
 	Schedule Schedule `json:"schedule"`
+
+	// Оповещения по порогам (уведомление в трее и запись в журнал Windows)
+	Alerts Alerts `json:"alerts"`
+
+	// История нагрузки: сколько дней хранить (0 — не вести)
+	LoadHistoryDays int `json:"load_history_days"`
+}
+
+// Alerts — пороги оповещений. 0 — проверка выключена.
+type Alerts struct {
+	Enabled     bool     `json:"enabled"`
+	DiskFreePct int      `json:"disk_free_pct"` // мало места на разделе, % свободного
+	DiskHealth  bool     `json:"disk_health"`   // SMART: ошибки, износ, перегрев
+	DiskTemp    int      `json:"disk_temp"`     // °C
+	GPUTemp     int      `json:"gpu_temp"`      // °C
+	MemPct      int      `json:"mem_pct"`       // память занята дольше 10 минут, %
+	Battery     bool     `json:"battery"`       // сильный износ батареи
+	Reboot      bool     `json:"reboot"`        // Windows давно ждёт перезагрузки
+	Services    []string `json:"services"`      // службы, которые должны работать
 }
 
 // Schedule — регулярная автоматическая очистка.
@@ -68,6 +85,8 @@ func Default() *Config {
 
 		AutoUpdateCheck: true,
 		Schedule:        Schedule{Day: 0, Hour: 19, Cats: []string{"user_temp", "wer"}},
+		Alerts:          Alerts{Enabled: true, DiskFreePct: 10, DiskHealth: true, DiskTemp: 65, GPUTemp: 88, MemPct: 92, Battery: true, Reboot: true, Services: []string{}},
+		LoadHistoryDays: 7,
 	}
 }
 
@@ -118,6 +137,25 @@ func (c *Config) Normalize() {
 	}
 	if c.Schedule.Cats == nil {
 		c.Schedule.Cats = []string{}
+	}
+	a := &c.Alerts
+	clamp := func(v *int, lo, hi int) {
+		if *v != 0 && (*v < lo || *v > hi) {
+			*v = 0
+		}
+	}
+	clamp(&a.DiskFreePct, 1, 50)
+	clamp(&a.DiskTemp, 40, 90)
+	clamp(&a.GPUTemp, 60, 105)
+	clamp(&a.MemPct, 50, 99)
+	if a.Services == nil {
+		a.Services = []string{}
+	}
+	if len(a.Services) > 30 {
+		a.Services = a.Services[:30]
+	}
+	if c.LoadHistoryDays < 0 || c.LoadHistoryDays > 31 {
+		c.LoadHistoryDays = 7
 	}
 }
 

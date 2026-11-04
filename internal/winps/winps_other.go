@@ -19,3 +19,6 @@ func JSON(string, time.Duration, any) error { return errNo }
 
 // Quote экранирует строку для PowerShell.
 func Quote(s string) string { return "'" + strings.ReplaceAll(s, "'", "''") + "'" }
+
+// Stream недоступен вне Windows.
+func Stream(string, time.Duration, func(string)) error { return errNo }

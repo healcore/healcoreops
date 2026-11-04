@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -20,6 +21,7 @@ import (
 	"github.com/healcore/healcoreops/internal/reghealer"
 	"github.com/healcore/healcoreops/internal/sysadmin"
 	"github.com/healcore/healcoreops/internal/tweaks"
+	"github.com/healcore/healcoreops/internal/winupdate"
 )
 
 // DataDir — папка данных программы (рядом с настройками).
@@ -110,6 +112,13 @@ func (c *Core) Undo(id int64) error {
 		err = reghealer.Restore(a["dir"])
 	case "recycle":
 		err = diskspace.Restore(a["path"])
+	case "wu_pause":
+		prev := map[string]string{}
+		if e := json.Unmarshal([]byte(a["prev"]), &prev); e != nil {
+			err = e
+		} else {
+			err = winupdate.WritePause(prev)
+		}
 	default:
 		err = errors.New("unknown undo kind")
 	}

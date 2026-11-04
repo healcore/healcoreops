@@ -187,6 +187,7 @@ func (c *Core) routes(m *http.ServeMux) {
 		})
 	})
 	c.routes2(m)
+	c.routes3(m)
 
 	// ---- Автозагрузка ----
 	m.HandleFunc("GET /api/autostart", func(w http.ResponseWriter, r *http.Request) {
@@ -491,6 +492,10 @@ func (c *Core) routes(m *http.ServeMux) {
 					_ = json.Unmarshal(v, &cfg.CloseToTray)
 				case "run_at_startup":
 					_ = json.Unmarshal(v, &cfg.RunAtStartup)
+				case "alerts":
+					_ = json.Unmarshal(v, &cfg.Alerts)
+				case "load_history_days":
+					_ = json.Unmarshal(v, &cfg.LoadHistoryDays)
 				case "driver_no_wu":
 					_ = json.Unmarshal(v, &cfg.DriverNoWU)
 				case "schedule":

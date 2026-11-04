@@ -1002,6 +1002,7 @@ async function init() {
   pollLog(); setInterval(pollLog, 1500);
   if (HOST.health) { pollHealth(); setInterval(pollHealth, 10000); }
   if (typeof init2 === "function") init2();
+  if (typeof init3 === "function") init3();
   window.addEventListener("resize", () => Object.values(sparks).forEach(s => s.draw()));
 }
 init().catch(e => { document.body.innerHTML = `<pre style="padding:20px">${esc(e.message)}</pre>`; });

@@ -32,7 +32,7 @@ input, select, textarea { user-select: text; font: inherit; color: inherit; }
 .small { font-size: 11.5px; }
 .grow { flex: 1; min-width: 0; }
 
-.app { display: grid; grid-template: "top top" 58px "side main" 1fr "status status" 28px / 196px 1fr; height: 100vh; }
+.app { display: grid; grid-template: "top top" 58px "side main" 1fr "status status" 28px / 208px 1fr; height: 100vh; }
 
 /* Шапка */
 .top { grid-area: top; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; background: var(--panel); border-bottom: 1px solid var(--border); }
@@ -373,3 +373,55 @@ kbd { font: 600 10px/1 "Segoe UI", system-ui, sans-serif; color: var(--dim); bor
 .spin { width: 14px; height: 14px; flex: none; border: 2px solid var(--muted); border-top-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
 .drv-progress.done .spin { animation: none; border-color: var(--muted); border-style: solid; }
 #drvLog { margin-top: 8px; max-height: 220px; }
+
+/* ---------- 1.9: история нагрузки ---------- */
+.lh-legend { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; font-size: 12px; margin-bottom: 8px; }
+.lh-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.lh-legend .sw { width: 18px; height: 0; border-top: 2px solid var(--line); display: inline-block; }
+.lh-legend .sw.mem { border-top: 2px dashed var(--f1); }
+.lh-wrap { position: relative; }
+#lhChart { width: 100%; height: 260px; display: block; cursor: crosshair; }
+.lh-tip { position: absolute; top: 4px; z-index: 2; pointer-events: none; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 12px; box-shadow: var(--shadow); max-width: 420px; }
+.lh-tip div { margin-top: 3px; color: var(--muted); }
+.lh-tip div b { color: var(--text); font-weight: 600; }
+.lh-axis { position: relative; height: 16px; margin-top: 4px; font-size: 11px; color: var(--dim); }
+.lh-axis span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+#lhRange button { min-width: 52px; }
+
+/* ---------- здоровье железа ---------- */
+.hw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+.hw-cell { border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; background: var(--panel2); }
+.hw-cell.l2 { border-color: var(--accent); }
+.hw-cell .toolbar { flex-wrap: nowrap; }
+.hw-cell .toolbar b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hw-reason { font-size: 12px; margin: 6px 0 2px; font-weight: 600; }
+.hw-kv { margin-top: 8px; }
+
+/* ---------- сеть ---------- */
+.nc-item { cursor: pointer; }
+.nc-detail { margin-top: 6px; font-size: 12px; display: grid; gap: 2px; }
+.nc-detail > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.np-port { min-width: 78px; font-weight: 700; }
+.item .d .mono-s, .nc-detail .mono-s { font-size: 11px; }
+
+/* ---------- дубликаты ---------- */
+.dup-group { padding: 12px 14px; margin-bottom: 8px; }
+.dup-group b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dup-file { display: flex; align-items: center; gap: 10px; padding: 5px 2px; border-top: 1px solid var(--grid); cursor: pointer; }
+.dup-file .mono-s { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dup-file.na { opacity: .5; cursor: default; }
+
+/* ---------- снимки ---------- */
+.sn-sym { width: 18px; text-align: center; font-weight: 800; font-size: 15px; color: var(--muted); }
+.sn-ch.added .sn-sym { color: var(--text); }
+.sn-ch .d.mono { max-width: none; }
+#snDiffAreas .btn { min-height: 28px; padding: 4px 10px; font-size: 12px; }
+
+/* ---------- оповещения ---------- */
+.alerts-card { border-left: 3px solid var(--accent); }
+.alerts-card .check-row .d { word-break: break-word; }
+.num-input { width: 90px; }
+.al-form { grid-template-columns: 240px 1fr; }
+.wu-item { cursor: pointer; }
+.wu-item input, .dup-file input { width: 15px; height: 15px; accent-color: var(--accent); flex: none; }
+#wuPauseDays { width: auto; }

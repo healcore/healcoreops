@@ -171,7 +171,8 @@ func RuleFor(method, path string) Rule {
 	case pre("/api/profile/import"):
 		return RuleSettings
 	case pre("/api/autostart"), pre("/api/maintenance/run"), pre("/api/proc/"), pre("/api/power"),
-		pre("/api/opt/trim"), pre("/api/opt/lower"), pre("/api/history/undo"), pre("/api/schedule"):
+		pre("/api/opt/trim"), pre("/api/opt/lower"), pre("/api/history/undo"), pre("/api/schedule"),
+		pre("/api/wu/install"), pre("/api/wu/pause"):
 		return RuleWrite
 	}
 	return RuleNone

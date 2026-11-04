@@ -265,22 +265,19 @@
           <div class="kv" id="sysInfoBody"></div>
           <div class="card-foot"><button class="btn" id="sysCopy" data-t="copy"></button></div>
         </div>
-        <p class="help" data-t="driver_src"></p>
-        <div class="toolbar"><span class="muted grow" data-t="devices_hint"></span><input id="drvSearch" class="input" data-tp="as_search_ph"><button class="btn" id="drvReload" data-t="refresh"></button></div>
-        <div id="devicesList"></div>
-        <details class="wu-details">
-          <summary data-t="driver_wu_title"></summary>
-          <div class="card" style="margin-top:10px">
-            <p class="help" data-t="driver_wu_help"></p>
-            <div class="toolbar" style="margin:8px 0">
-              <button class="btn" id="drvScan" data-t="driver_scan"></button>
-              <button class="btn" id="drvInstallAll" data-t="driver_install_all" disabled></button>
-              <span class="muted small grow" id="drvScanMsg"></span>
-            </div>
-            <div id="drvJobLog" class="joblog hidden"></div>
-            <div id="drvUpdates"></div>
+        <div class="policy-note hidden" data-rule="drivers"></div>
+        <div class="card drv-bar">
+          <div class="toolbar">
+            <div class="grow"><b data-t="drv_title"></b><div class="muted small" id="drvSummary" data-t="drv_intro"></div></div>
+            <button class="btn" id="drvCheck" data-t="drv_check"></button>
+            <button class="btn" id="drvUpdSel" disabled></button>
+            <button class="btn btn-accent" id="drvUpdAll" disabled></button>
           </div>
-        </details>
+          <label class="check" style="margin-top:10px"><input type="checkbox" id="drvUseWU"><span data-t="drv_use_wu"></span></label>
+          <p class="help" data-t="drv_src2"></p>
+        </div>
+        <div class="toolbar"><label class="check"><input type="checkbox" id="drvSelAll"><span data-t="all"></span></label><span class="muted grow small" id="drvSelInfo"></span><input id="drvSearch" class="input" data-tp="as_search_ph"><button class="btn" id="drvReload" data-t="refresh"></button></div>
+        <div id="devicesList"></div>
       </div>
     </section>
 

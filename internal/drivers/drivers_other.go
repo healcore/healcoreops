@@ -12,11 +12,8 @@ func Supported() bool { return false }
 // List недоступен вне Windows.
 func List() ([]Device, error) { return nil, ctl.ErrUnsupported }
 
-// Scan недоступен вне Windows.
-func Scan() error { return ctl.ErrUnsupported }
+// Check недоступен вне Windows.
+func Check(bool) error { return ctl.ErrUnsupported }
 
-// Install недоступен вне Windows.
-func Install([]string) error { return ctl.ErrUnsupported }
-
-// InstallVendor недоступен вне Windows.
-func InstallVendor(string, string) (string, error) { return "", ctl.ErrUnsupported }
+// Update недоступен вне Windows.
+func Update([]string, bool, bool) error { return ctl.ErrUnsupported }

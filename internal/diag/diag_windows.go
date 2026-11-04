@@ -3,23 +3,18 @@
 package diag
 
 import (
-	"bufio"
-	"context"
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
-	"syscall"
 	"time"
 
 	"golang.org/x/sys/windows/registry"
 
 	"github.com/healcore/healcoreops/internal/ctl"
 	"github.com/healcore/healcoreops/internal/i18n"
-	"github.com/healcore/healcoreops/internal/maintenance"
 	"github.com/healcore/healcoreops/internal/winps"
 )
 
@@ -495,33 +490,4 @@ func Adapters() []Adapter {
 		return !out[i].Virtual && out[j].Virtual
 	})
 	return out
-}
-
-// Traceroute запускает трассировку в фоне (журнал — как у обслуживания).
-func Traceroute(host string) error {
-	if !ValidHost(host) {
-		return fmt.Errorf("bad host")
-	}
-	return maintenance.StartJob("tracert", "tracert "+host, func(emit func(string)) error {
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
-		defer cancel()
-		// chcp 65001 — вывод в UTF-8 вместо кодовой страницы OEM
-		cmd := exec.CommandContext(ctx, "cmd.exe")
-		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000,
-			CmdLine: `cmd.exe /d /c "chcp 65001 >nul & tracert -d -h 24 -w 800 ` + host + `"`}
-		out, err := cmd.StdoutPipe()
-		if err != nil {
-			return err
-		}
-		if err := cmd.Start(); err != nil {
-			return err
-		}
-		sc := bufio.NewScanner(out)
-		for sc.Scan() {
-			if l := strings.TrimRight(sc.Text(), "\r "); strings.TrimSpace(l) != "" {
-				emit(l)
-			}
-		}
-		return cmd.Wait()
-	})
 }

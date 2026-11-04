@@ -371,3 +371,9 @@ kbd { font: 600 10px/1 "Segoe UI", system-ui, sans-serif; color: var(--dim); bor
 :root[data-acrylic] .palette-box { background: var(--panel); }
 @media (max-width: 1150px) { .sv-item select.input { width: 150px; } .path-input { width: 200px; } }
 .drive .toolbar b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Драйверы: чекбокс + описание + статус */
+.drv-item { grid-template-columns: auto 1fr auto; }
+.drv-item .tags { flex-wrap: wrap; justify-content: flex-end; }
+.drv-bar .toolbar b { font-size: 15px; }
+.drv-bar .help { margin-bottom: 0; }

@@ -1,6 +1,7 @@
 // Словарь разделов версии 1.8: ключ → [русский, английский]
 Object.assign(DICT, {
   search_all: ["Поиск", "Search"],
+  close: ["Закрыть", "Close"],
   ng_monitor: ["Мониторинг", "Monitoring"], ng_clean: ["Очистка и ускорение", "Cleanup & speed"],
   ng_system: ["Система", "System"], ng_diag: ["Диагностика", "Diagnostics"],
   nav_disk: ["Место на диске", "Disk space"], nav_programs: ["Программы", "Programs"], nav_services: ["Службы и задачи", "Services & tasks"],
@@ -98,9 +99,9 @@ Object.assign(DICT, {
   // Сеть
   net_check: ["Проверка интернета", "Internet check"], net_check_hint: ["Проверим DNS и доступ к интернету.", "We'll check DNS and internet access."],
   net_check_run: ["Проверить интернет", "Check internet"], net_flush: ["Очистить кэш DNS", "Flush DNS cache"],
-  net_tools: ["Инструменты", "Tools"], net_ping: ["Проверить связь", "Ping (TCP)"], net_port: ["Проверить порт", "Check port"], net_trace: ["Трассировка", "Traceroute"],
-  net_tools_help: ["«Проверить связь» измеряет время подключения к узлу по TCP — работает даже там, где ping (ICMP) закрыт. Трассировка показывает путь до узла.",
-    "“Ping (TCP)” measures TCP connect time — it works even where ICMP ping is blocked. Traceroute shows the route to the host."],
+  net_tools: ["Инструменты", "Tools"], net_ping: ["Проверить связь", "Ping"], net_port: ["Проверить порт", "Check port"], net_trace: ["Трассировка", "Traceroute"],
+  net_tools_help: ["«Проверить связь» — обычный ping (ICMP); если узел его блокирует, проверяем по TCP-порту. Трассировка показывает каждый маршрутизатор на пути до узла.",
+    "“Ping” is a regular ICMP ping; if the host blocks it, we check the TCP port. Traceroute shows every router on the way to the host."],
   net_adapters: ["Сетевые адаптеры", "Network adapters"],
   net_dns: ["DNS (поиск адресов)", "DNS (name lookup)"], net_inet: ["Доступ в интернет", "Internet access"],
   nv_ok: ["Интернет работает нормально.", "The internet works fine."],
@@ -184,4 +185,25 @@ Silent install:
   pal_ph: ["Раздел, действие, твик или программа…", "Section, action, tweak or program…"],
   pal_foot: ["↑↓ — выбрать · Enter — выполнить · Esc — закрыть", "↑↓ select · Enter run · Esc close"],
   pal_page: ["раздел", "section"], pal_action: ["действие", "action"], pal_tweak: ["твик", "tweak"], pal_maint: ["обслуживание", "maintenance"], pal_prog: ["программа", "program"],
+
+  // Драйверы (1.8.1)
+  drv_title: ["Обновление драйверов", "Driver updates"],
+  drv_intro: ["Нажмите «Проверить обновления» — найдём новые версии для каждого устройства.", "Click “Check for updates” to find newer versions for each device."],
+  drv_check: ["Проверить обновления", "Check for updates"],
+  drv_use_wu: ["Брать драйверы производителей из каталога Windows Update", "Use manufacturers' drivers from the Windows Update catalog"],
+  drv_src2: ["Видеокарты NVIDIA обновляются напрямую с nvidia.com: последняя версия для вашей модели, проверка цифровой подписи NVIDIA, тихая установка. Остальные устройства (чипсет платы, Realtek, MediaTek, AMD, Intel) — пакетами самих производителей, которые они публикуют в каталоге Windows Update; поиск идёт по точному идентификатору оборудования. Прошивки BIOS автоматически не ставятся.",
+    "NVIDIA graphics cards are updated straight from nvidia.com: the latest driver for your model, NVIDIA signature check, silent install. Other devices (board chipset, Realtek, MediaTek, AMD, Intel) get the manufacturers' own packages they publish in the Windows Update catalog, matched by exact hardware ID. BIOS firmware is never installed automatically."],
+  drv_avail: ["доступно %1", "available %1"], drv_newer: ["новее", "newer"],
+  drv_current: ["актуален", "up to date"], drv_none: ["нет в официальных источниках", "not in official sources"],
+  drv_update: ["Обновить", "Update"], drv_updating: ["Обновление драйверов", "Updating drivers"],
+  drv_site: ["Сайт %1", "%1 website"],
+  drv_update_sel: ["Обновить выбранные (%1)", "Update selected (%1)"],
+  drv_update_all: ["Обновить все", "Update all"], drv_update_all_n: ["Обновить все (%1)", "Update all (%1)"],
+  drv_sel_info: ["Выбрано: %1", "Selected: %1"],
+  drv_found_n: ["Есть обновления для %1 устройств — отмечены галочками.", "Updates available for %1 devices — they're ticked."],
+  drv_all_current: ["Все драйверы актуальны.", "All drivers are up to date."],
+  drv_update_q: ["Обновить драйверы?\n\n%1\n\nВо время установки видеодрайвера экран может мигнуть. Откатить драйвер можно в Диспетчере устройств.",
+    "Update drivers?\n\n%1\n\nThe screen may flicker while the graphics driver installs. You can roll back a driver in Device Manager."],
+  drv_update_all_q0: ["Сначала найдём обновления для всех устройств, затем установим их. Продолжить?", "We'll first look for updates for all devices and then install them. Continue?"],
+  ping_icmp_blocked: [" (ICMP закрыт — ответил TCP-порт)", " (ICMP blocked — TCP port answered)"],
 });

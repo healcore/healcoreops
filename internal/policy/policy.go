@@ -166,7 +166,7 @@ func RuleFor(method, path string) Rule {
 		return RuleServices
 	case pre("/api/disk/clean"), pre("/api/disk/recycle"), pre("/api/opt/tempclean"):
 		return RuleDisk
-	case pre("/api/drivers/install"):
+	case pre("/api/drivers/update"):
 		return RuleDrivers
 	case pre("/api/profile/import"):
 		return RuleSettings

@@ -123,13 +123,15 @@ type PingResult struct {
 	Times []int64 `json:"times"` // мс, -1 — нет ответа
 	Avg   int64   `json:"avg"`
 	Lost  int     `json:"lost"`
+	Proto string  `json:"proto"`          // icmp | tcp
+	Note  string  `json:"note,omitempty"` // icmp-blocked — ICMP закрыт, ответил TCP
 	Error string  `json:"error,omitempty"`
 }
 
 // TCPPing измеряет время установки TCP-соединения (работает без прав администратора
 // и там, где ICMP закрыт).
 func TCPPing(host string, port, count int) PingResult {
-	r := PingResult{Host: host, Port: port, Times: []int64{}}
+	r := PingResult{Host: host, Port: port, Proto: "tcp", Times: []int64{}}
 	if !ValidHost(host) || port <= 0 || port > 65535 {
 		r.Error = "bad host"
 		return r

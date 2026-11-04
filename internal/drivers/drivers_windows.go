@@ -3,7 +3,6 @@
 package drivers
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -14,7 +13,6 @@ import (
 	"time"
 	"unicode/utf16"
 
-	"github.com/healcore/healcoreops/internal/ctl"
 	"github.com/healcore/healcoreops/internal/i18n"
 )
 
@@ -71,6 +69,8 @@ $os  = Get-CimInstance Win32_OperatingSystem
 $cs  = Get-CimInstance Win32_ComputerSystem
 $signed = @{}
 Get-CimInstance Win32_PnPSignedDriver | ForEach-Object { if($_.DeviceID){ $signed[$_.DeviceID] = $_ } }
+$hwids = @{}
+Get-CimInstance Win32_PnPEntity | ForEach-Object { if($_.PNPDeviceID){ $hwids[$_.PNPDeviceID] = @($_.HardwareID) } }
 $main = 'Display','Net','Media','AudioEndpoint','MEDIA'
 $devs = Get-PnpDevice -PresentOnly | Where-Object { $main -contains $_.Class }
 $out = foreach($d in $devs){
@@ -79,7 +79,8 @@ $out = foreach($d in $devs){
   if($s.DriverDate){ try { $dt = ([Management.ManagementDateTimeConverter]::ToDateTime($s.DriverDate)).ToString('yyyy-MM-dd') } catch { } }
   [pscustomobject]@{
     name=[string]$d.FriendlyName; class=[string]$d.Class; status=[string]$d.Status;
-    manu=[string]$s.Manufacturer; version=[string]$s.DriverVersion; date=$dt; id=[string]$d.InstanceId
+    manu=[string]$s.Manufacturer; version=[string]$s.DriverVersion; date=$dt; id=[string]$d.InstanceId;
+    hw=@($hwids[$d.InstanceId] | Where-Object { $_ })
   }
 }
 [pscustomobject]@{
@@ -92,6 +93,7 @@ $out = foreach($d in $devs){
 
 type rawDev struct {
 	Name, Class, Status, Manu, Version, Date, ID string
+	HW                                           []string
 }
 
 type rawList struct {
@@ -133,20 +135,20 @@ func List() ([]Device, error) {
 	// 1) Материнская плата — все её драйверы на странице вендора.
 	if r.BoardManu != "" || r.BoardProduct != "" {
 		name := join(r.BoardManu, r.BoardProduct)
-		vendor, url, wg := vendorSite(r.BoardManu + " " + r.BoardProduct)
+		vendor, url := vendorSite(r.BoardManu + " " + r.BoardProduct)
 		devs = append(devs, Device{
 			ID: "board", Name: name, Class: "BaseBoard",
 			Category: i18n.Pick("Материнская плата", "Motherboard"),
-			Manu:     r.BoardManu, Vendor: vendor, VendorURL: url, Winget: wg, Status: "OK",
+			Manu:     r.BoardManu, Vendor: vendor, VendorURL: url, Status: "OK",
 		})
 	}
 	// 2) Процессор — одна запись (а не по ядру/потоку).
 	if r.CPUName != "" {
-		vendor, url, wg := vendorSite(r.CPUName + " " + r.CPUManu)
+		vendor, url := vendorSite(r.CPUName + " " + r.CPUManu)
 		devs = append(devs, Device{
 			ID: "cpu", Name: r.CPUName, Class: "Processor",
 			Category: i18n.Pick("Процессор", "Processor"),
-			Manu:     r.CPUManu, Vendor: vendor, VendorURL: url, Winget: wg, Status: "OK",
+			Manu:     r.CPUManu, Vendor: vendor, VendorURL: url, Status: "OK",
 		})
 	}
 	// 3) Видеокарта, сеть, звук.
@@ -158,15 +160,16 @@ func List() ([]Device, error) {
 		if d.Class == "Display" && gpuName == "" {
 			gpuName = name
 		}
-		vendor, url, wg := vendorSite(name + " " + d.Manu)
+		vendor, url := vendorSite(name + " " + d.Manu)
 		devs = append(devs, Device{
 			ID: d.ID, Name: name, Class: d.Class, Category: catName(d.Class),
 			Manu: d.Manu, Version: d.Version, Date: d.Date, Status: d.Status,
 			NeedsDriver: d.Status != "OK" || d.Version == "",
-			Vendor:      vendor, VendorURL: url, Winget: wg,
+			Vendor:      vendor, VendorURL: url, HW: d.HW,
 		})
 	}
 
+	setLastDevices(devs)
 	setSysInfo(SysInfo{
 		Board: join(r.BoardManu, r.BoardProduct),
 		CPU:   r.CPUName,
@@ -194,141 +197,4 @@ func bytesGB(b int64) string {
 		return ""
 	}
 	return fmt.Sprintf("%.0f %s", float64(b)/(1<<30), i18n.Pick("ГБ", "GB"))
-}
-
-// Scan ищет обновления драйверов в Windows Update (может занять минуту).
-func Scan() error {
-	return runJob("scan", func(e func(string)) error {
-		e("▸ " + i18n.T("Поиск обновлений драйверов в Windows Update…"))
-		const s = `$ErrorActionPreference='Stop'
-try {
-  $ses = New-Object -ComObject Microsoft.Update.Session
-  $sr = $ses.CreateUpdateSearcher()
-  $r = $sr.Search("IsInstalled=0 and Type='Driver'")
-  $out = foreach($u in $r.Updates){ [pscustomobject]@{ id=[string]$u.Identity.UpdateID; title=[string]$u.Title; date=[string]$u.DriverVerDate } }
-  'JSON:' + (ConvertTo-Json -InputObject @($out) -Depth 3 -Compress)
-} catch { 'ERR:' + $_.Exception.Message }`
-		out, err := powershell(s, 5*time.Minute)
-		if err != nil {
-			return err
-		}
-		line := strings.TrimSpace(string(out))
-		if i := strings.Index(line, "ERR:"); i >= 0 {
-			return errors.New(strings.TrimSpace(line[i+4:]))
-		}
-		var ups []Update
-		if i := strings.Index(line, "JSON:"); i >= 0 {
-			payload := strings.TrimSpace(line[i+5:])
-			if json.Unmarshal([]byte(payload), &ups) != nil {
-				var one Update
-				if json.Unmarshal([]byte(payload), &one) == nil && one.ID != "" {
-					ups = []Update{one}
-				}
-			}
-		}
-		jmu.Lock()
-		updates, scanned = ups, true
-		jmu.Unlock()
-		e(fmt.Sprintf(i18n.T("Найдено обновлений драйверов: %d"), len(ups)))
-		return nil
-	})
-}
-
-// Install скачивает и устанавливает выбранные обновления драйверов (нужен admin).
-func Install(ids []string) error {
-	if !ctl.IsElevated() {
-		return errors.New(i18n.T("нужны права администратора — нажмите «Перезапустить от имени администратора»"))
-	}
-	if len(ids) == 0 {
-		return errors.New(i18n.T("не выбрано ни одного обновления"))
-	}
-	list := "'" + strings.Join(ids, "','") + "'"
-	return runJob("install", func(e func(string)) error {
-		e("▸ " + i18n.T("Установка драйверов из Windows Update…"))
-		s := `$ErrorActionPreference='Stop'
-$ids = @(` + list + `)
-try {
-  $ses = New-Object -ComObject Microsoft.Update.Session
-  $sr = $ses.CreateUpdateSearcher()
-  $r = $sr.Search("IsInstalled=0 and Type='Driver'")
-  $coll = New-Object -ComObject Microsoft.Update.UpdateColl
-  foreach($u in $r.Updates){ if($ids -contains [string]$u.Identity.UpdateID){ [void]$coll.Add($u) } }
-  if($coll.Count -eq 0){ 'ERR:' + 'updates not found'; exit }
-  $dl = $ses.CreateUpdateDownloader(); $dl.Updates = $coll; [void]$dl.Download()
-  $inst = $ses.CreateUpdateInstaller(); $inst.Updates = $coll; $res = $inst.Install()
-  'CODE:' + [string]$res.ResultCode + ':' + [string]$res.RebootRequired
-} catch { 'ERR:' + $_.Exception.Message }`
-		out, err := powershell(s, 30*time.Minute)
-		if err != nil {
-			return err
-		}
-		line := strings.TrimSpace(string(out))
-		if i := strings.Index(line, "ERR:"); i >= 0 {
-			return errors.New(strings.TrimSpace(line[i+4:]))
-		}
-		// ResultCode 2 = Succeeded
-		if strings.Contains(line, "CODE:2:") {
-			e("✓ " + i18n.T("драйверы установлены"))
-			if strings.HasSuffix(line, ":True") {
-				e(i18n.T("Для завершения требуется перезагрузка"))
-			}
-			// обновим список после установки
-			_ = Scan()
-			return nil
-		}
-		return errors.New(i18n.T("Windows Update вернул ошибку установки"))
-	})
-}
-
-// wingetAvailable сообщает, установлен ли менеджер пакетов winget.
-func wingetAvailable() bool {
-	_, err := exec.LookPath("winget")
-	return err == nil
-}
-
-// InstallVendor ставит официальное средство вендора через winget (из
-// официального источника с проверкой издателя и контрольной суммы). Если это
-// невозможно, открывает официальную страницу и возвращает mode="page".
-func InstallVendor(winget, url string) (string, error) {
-	if winget != "" && WingetAllowed(winget) && wingetAvailable() {
-		err := runJob("install", func(e func(string)) error {
-			e("▸ " + fmt.Sprintf(i18n.T("Установка через winget: %s"), winget))
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
-			defer cancel()
-			cmd := exec.CommandContext(ctx, "winget", "install", "--id", winget, "-e",
-				"--silent", "--accept-package-agreements", "--accept-source-agreements")
-			cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
-			out, err := cmd.CombinedOutput()
-			if ctx.Err() == context.DeadlineExceeded {
-				return errors.New(i18n.T("превышено время ожидания"))
-			}
-			if err != nil {
-				if s := strings.TrimSpace(string(out)); s != "" {
-					e(lastLines(s, 3))
-				}
-				// Не удалось через winget — открываем официальную страницу.
-				_ = OpenVendor(url)
-				return errors.New(i18n.T("winget не смог установить — открыта официальная страница"))
-			}
-			e("✓ " + i18n.T("установлено"))
-			return nil
-		})
-		if err != nil {
-			return "", err
-		}
-		return "install", nil
-	}
-	// Автоустановка недоступна для этого производителя — открываем его сайт.
-	if err := OpenVendor(url); err != nil {
-		return "", err
-	}
-	return "page", nil
-}
-
-func lastLines(s string, n int) string {
-	ls := strings.Split(strings.TrimSpace(s), "\n")
-	if len(ls) > n {
-		ls = ls[len(ls)-n:]
-	}
-	return strings.TrimSpace(strings.Join(ls, " "))
 }

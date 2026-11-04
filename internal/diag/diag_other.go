@@ -26,6 +26,9 @@ func PendingReboot() Reboot { return Reboot{Reasons: []string{}} }
 
 func Security() []SecItem { return []SecItem{} }
 
+// Ping — вне Windows проверка по TCP (ICMP требует прав root).
+func Ping(host string, port, count int) PingResult { return TCPPing(host, port, count) }
+
 // Adapters — интерфейсы средствами Go.
 func Adapters() []Adapter { return basicAdapters() }
 

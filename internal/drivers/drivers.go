@@ -1,6 +1,7 @@
-// Package drivers — список устройств и обновление драйверов через
-// Центр обновления Windows (каталог Microsoft, драйверы с подписью WHQL).
-// Сторонние сайты и установщики не используются.
+// Package drivers — основные устройства и автоматическое обновление их
+// драйверов из официальных источников: сервис NVIDIA (с проверкой подписи)
+// и пакеты производителей из каталога Windows Update. Сторонние сайты и
+// непроверенные установщики не используются.
 package drivers
 
 import (
@@ -24,18 +25,18 @@ func OpenVendor(u string) error {
 
 // Device — устройство и его текущий драйвер.
 type Device struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Class       string `json:"class"`
-	Category    string `json:"category"` // понятная группа
-	Manu        string `json:"manu"`
-	Version     string `json:"version"`
-	Date        string `json:"date"`
-	Status      string `json:"status"`
-	NeedsDriver bool   `json:"needsDriver"` // нет драйвера или ошибка
-	Vendor      string `json:"vendor"`      // производитель для страницы драйверов
-	VendorURL   string `json:"vendorURL"`   // официальная страница драйверов
-	Winget      string `json:"winget"`      // id официального средства установки драйверов (если есть)
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Class       string   `json:"class"`
+	Category    string   `json:"category"` // понятная группа
+	Manu        string   `json:"manu"`
+	Version     string   `json:"version"`
+	Date        string   `json:"date"`
+	Status      string   `json:"status"`
+	NeedsDriver bool     `json:"needsDriver"` // нет драйвера или ошибка
+	Vendor      string   `json:"vendor"`      // производитель для страницы драйверов
+	VendorURL   string   `json:"vendorURL"`   // официальная страница драйверов
+	HW          []string `json:"-"`           // идентификаторы оборудования (для поиска драйвера)
 }
 
 // SysInfo — краткие сведения о системе (помогают найти драйверы).
@@ -65,59 +66,46 @@ func setSysInfo(s SysInfo) {
 	sysMu.Unlock()
 }
 
-// vendorSite — производитель, его официальная страница драйверов и, если есть,
-// id официального средства автоустановки драйверов для winget. Где winget-id
-// задан, приложение ставит драйвер автоматически из официального источника
-// (winget проверяет издателя и контрольную сумму); иначе открывает страницу.
-func vendorSite(text string) (vendor, url, winget string) {
+// vendorSite — производитель и его официальная страница драйверов
+// (кнопка «Сайт» рядом с устройством — для ручной проверки).
+func vendorSite(text string) (vendor, url string) {
 	t := toLowerASCII(text)
 	switch {
 	case has(t, "nvidia"), has(t, "geforce"):
 		// Официальное приложение NVIDIA ставит и обновляет драйверы видеокарты.
-		return "NVIDIA", "https://www.nvidia.com/Download/index.aspx", "Nvidia.GeForceExperience"
+		return "NVIDIA", "https://www.nvidia.com/Download/index.aspx"
 	case has(t, "advanced micro"), has(t, "amd "), t == "amd", has(t, "radeon"), has(t, "ryzen"):
-		return "AMD", "https://www.amd.com/en/support/download/drivers.html", ""
+		return "AMD", "https://www.amd.com/en/support/download/drivers.html"
 	case has(t, "intel"):
 		// Intel Driver & Support Assistant — официально находит и ставит драйверы Intel.
-		return "Intel", "https://www.intel.com/content/www/us/en/download-center/home.html", "Intel.IntelDriverAndSupportAssistant"
+		return "Intel", "https://www.intel.com/content/www/us/en/download-center/home.html"
 	case has(t, "realtek"):
-		return "Realtek", "https://www.realtek.com/Download/List?cate_id=584", ""
+		return "Realtek", "https://www.realtek.com/Download/List?cate_id=584"
 	case has(t, "asustek"), has(t, "asus"):
-		return "ASUS", "https://www.asus.com/support/download-center/", ""
+		return "ASUS", "https://www.asus.com/support/download-center/"
 	case has(t, "micro-star"), has(t, "msi"):
-		return "MSI", "https://www.msi.com/support/download", ""
+		return "MSI", "https://www.msi.com/support/download"
 	case has(t, "gigabyte"):
-		return "GIGABYTE", "https://www.gigabyte.com/Support", ""
+		return "GIGABYTE", "https://www.gigabyte.com/Support"
 	case has(t, "asrock"):
-		return "ASRock", "https://www.asrock.com/support/index.asp", ""
+		return "ASRock", "https://www.asrock.com/support/index.asp"
 	case has(t, "biostar"):
-		return "Biostar", "https://www.biostar.com.tw/app/en/support/download.php", ""
+		return "Biostar", "https://www.biostar.com.tw/app/en/support/download.php"
 	case has(t, "dell"):
-		return "Dell", "https://www.dell.com/support/home/en-us?app=drivers", "Dell.CommandUpdate"
+		return "Dell", "https://www.dell.com/support/home/en-us?app=drivers"
 	case has(t, "hewlett"), has(t, "hp "), t == "hp":
-		return "HP", "https://support.hp.com/us-en/drivers", ""
+		return "HP", "https://support.hp.com/us-en/drivers"
 	case has(t, "lenovo"):
-		return "Lenovo", "https://support.lenovo.com/us/en/solutions/ht003029", "Lenovo.SystemUpdate"
+		return "Lenovo", "https://support.lenovo.com/us/en/solutions/ht003029"
 	case has(t, "acer"):
-		return "Acer", "https://www.acer.com/us-en/support/drivers-and-manuals", ""
+		return "Acer", "https://www.acer.com/us-en/support/drivers-and-manuals"
 	case has(t, "qualcomm"), has(t, "atheros"):
-		return "Qualcomm", "https://www.qualcomm.com/support", ""
+		return "Qualcomm", "https://www.qualcomm.com/support"
 	case has(t, "mediatek"):
-		return "MediaTek", "https://www.mediatek.com/products/connectivity-and-networking", ""
+		return "MediaTek", "https://www.mediatek.com/products/connectivity-and-networking"
 	}
-	return "", "", ""
+	return "", ""
 }
-
-// allowedWinget — разрешённые id для автоустановки (официальные средства вендоров).
-var allowedWinget = map[string]bool{
-	"Nvidia.GeForceExperience":             true,
-	"Intel.IntelDriverAndSupportAssistant": true,
-	"Dell.CommandUpdate":                   true,
-	"Lenovo.SystemUpdate":                  true,
-}
-
-// WingetAllowed проверяет, что id входит в список официальных средств.
-func WingetAllowed(id string) bool { return allowedWinget[id] }
 
 // allowedHosts — куда разрешено открывать ссылки из раздела драйверов.
 var allowedHosts = map[string]bool{
@@ -154,14 +142,7 @@ func toLowerASCII(s string) string {
 	return string(b)
 }
 
-// Update — доступное обновление драйвера из Windows Update.
-type Update struct {
-	ID    string `json:"id"`
-	Title string `json:"title"`
-	Date  string `json:"date"`
-}
-
-// Job — состояние фоновой операции (поиск или установка).
+// Job — состояние фоновой операции (проверка или установка).
 type Job struct {
 	Running bool     `json:"running"`
 	Phase   string   `json:"phase"`
@@ -171,19 +152,17 @@ type Job struct {
 }
 
 var (
-	jmu     sync.Mutex
-	job     Job
-	updates []Update // результат последнего поиска
-	scanned bool
+	jmu sync.Mutex
+	job Job
 )
 
-// Status возвращает состояние операции и найденные обновления.
-func Status() (Job, []Update, bool) {
+// Status возвращает состояние фоновой операции.
+func Status() Job {
 	jmu.Lock()
 	defer jmu.Unlock()
 	cj := job
 	cj.Lines = append([]string(nil), job.Lines...)
-	return cj, append([]Update(nil), updates...), scanned
+	return cj
 }
 
 func emit(line string) {

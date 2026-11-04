@@ -428,18 +428,22 @@ $("netFlush").onclick = async () => {
 };
 function netOut(html) { const o = $("netOut"); o.classList.remove("hidden"); o.innerHTML = html; }
 $("netPing").onclick = () => busy($("netPing"), async () => {
-  const host = $("netHost").value.trim(), port = Number($("netPort").value) || 443;
+  const host = cleanHost($("netHost").value), port = Number($("netPort").value) || 443;
+  $("netHost").value = host;
   const r = await api("net/ping", { host, port });
   if (r.error || !r.ip || r.lost === r.times.length) return netOut(esc(t("ping_fail")));
-  netOut(esc(t("ping_res", r.host, r.port, r.ip, r.times.map(x => x < 0 ? "×" : x).join(" / "), r.lost, r.times.length, r.dnsMs)));
+  const res = r.proto === "icmp" ? t("ping_res", r.host, "ICMP", r.ip, r.times.map(x => x < 0 ? "×" : x).join(" / "), r.lost, r.times.length, r.dnsMs).replace(":ICMP", " ICMP")
+    : t("ping_res", r.host, r.port, r.ip, r.times.map(x => x < 0 ? "×" : x).join(" / "), r.lost, r.times.length, r.dnsMs);
+  netOut(esc(res + (r.note === "icmp-blocked" ? t("ping_icmp_blocked") : "")));
 });
 $("netPortBtn").onclick = () => busy($("netPortBtn"), async () => {
-  const host = $("netHost").value.trim(), port = Number($("netPort").value) || 443;
+  const host = cleanHost($("netHost").value), port = Number($("netPort").value) || 443;
   const r = await api("net/port", { host, port });
   netOut(esc(r.open ? t("port_open", port, host, r.ms) : t("port_closed", port, host)));
 });
+function cleanHost(v) { return v.trim().replace(/^[a-z]+:\/\//i, "").replace(/[\/?#].*$/, "").replace(/:\d+$/, ""); }
 $("netTrace").onclick = async () => {
-  const host = $("netHost").value.trim();
+  const host = cleanHost($("netHost").value); $("netHost").value = host;
   try { await api("net/trace", { host }); showJobModal(t("net_trace") + " · " + host); pollMaintJob(); } catch (e) { toast(e.message, true); }
 };
 

@@ -290,55 +290,57 @@ func (c *Core) routes(m *http.ServeMux) {
 		writeJSON(w, devs)
 	})
 	m.HandleFunc("GET /api/drivers/updates", func(w http.ResponseWriter, r *http.Request) {
-		j, ups, scanned := drivers.Status()
-		writeJSON(w, map[string]any{"job": j, "updates": ups, "scanned": scanned})
+		av, checked := drivers.Avails()
+		writeJSON(w, map[string]any{"job": drivers.Status(), "avail": av, "checked": checked})
 	})
-	m.HandleFunc("POST /api/drivers/scan", func(w http.ResponseWriter, r *http.Request) {
-		c.Log(LvlInfo, "%s", i18n.T("Поиск обновлений драйверов в Windows Update…"))
-		if err := drivers.Scan(); err != nil {
+	m.HandleFunc("POST /api/drivers/check", func(w http.ResponseWriter, r *http.Request) {
+		if err := drivers.Check(!c.Config().DriverNoWU); err != nil {
 			writeErr(w, err)
 			return
 		}
+		c.Log(LvlInfo, "%s", i18n.Pick("Проверка обновлений драйверов", "Checking for driver updates"))
 		writeJSON(w, true)
 	})
-	m.HandleFunc("POST /api/drivers/install", func(w http.ResponseWriter, r *http.Request) {
+	m.HandleFunc("POST /api/drivers/update", func(w http.ResponseWriter, r *http.Request) {
 		var in struct {
-			IDs []string `json:"ids"`
+			IDs   []string `json:"ids"`
+			All   bool     `json:"all"`
+			Names []string `json:"names"`
 		}
 		if err := readJSON(r, &in); err != nil {
 			writeErr(w, err)
 			return
 		}
-		c.Log(LvlInfo, i18n.T("Установка драйверов: %d"), len(in.IDs))
-		if err := drivers.Install(in.IDs); err != nil {
+		if len(in.IDs) == 0 && !in.All {
+			writeErr(w, errors.New(i18n.T("не выбрано ни одного обновления")))
+			return
+		}
+		if err := drivers.Update(in.IDs, in.All, !c.Config().DriverNoWU); err != nil {
 			writeErr(w, err)
 			return
 		}
-		c.Record("drivers", fmt.Sprintf(i18n.Pick("Установка драйверов из Windows Update: %d", "Installing drivers from Windows Update: %d"), len(in.IDs)), "", nil,
+		what := strings.Join(in.Names, ", ")
+		if in.All {
+			what = i18n.Pick("все устройства с обновлениями", "all devices with updates")
+		}
+		c.Log(LvlInfo, i18n.T("Установка драйвера: %s"), what)
+		c.Record("drivers", i18n.Pick("Обновление драйверов: ", "Driver update: ")+what, "", nil,
 			i18n.Pick("Откат драйвера: Диспетчер устройств → Свойства → «Откатить».", "To roll back: Device Manager → Properties → Roll Back Driver."))
 		writeJSON(w, true)
 	})
-	m.HandleFunc("POST /api/drivers/install-vendor", func(w http.ResponseWriter, r *http.Request) {
+	m.HandleFunc("POST /api/drivers/site", func(w http.ResponseWriter, r *http.Request) {
 		var in struct {
-			Winget string `json:"winget"`
-			URL    string `json:"url"`
-			Name   string `json:"name"`
+			URL string `json:"url"`
 		}
 		if err := readJSON(r, &in); err != nil {
 			writeErr(w, err)
 			return
 		}
-		mode, err := drivers.InstallVendor(in.Winget, in.URL)
-		if err != nil {
+		if err := drivers.OpenVendor(in.URL); err != nil {
 			writeErr(w, err)
 			return
 		}
-		if mode == "install" {
-			c.Log(LvlInfo, i18n.T("Установка драйвера: %s"), in.Name)
-			c.Record("drivers", i18n.Pick("Установка драйвера (winget): ", "Installing driver (winget): ")+in.Name, in.Winget, nil,
-				i18n.Pick("Откат драйвера: Диспетчер устройств → Свойства → «Откатить».", "To roll back: Device Manager → Properties → Roll Back Driver."))
-		}
-		writeJSON(w, map[string]string{"mode": mode})
+		writeJSON(w, true)
 	})
 	m.HandleFunc("GET /api/sysinfo", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, drivers.GetSysInfo()) })
 
@@ -493,6 +495,8 @@ func (c *Core) routes(m *http.ServeMux) {
 					_ = json.Unmarshal(v, &cfg.Opacity)
 				case "acrylic":
 					_ = json.Unmarshal(v, &cfg.Acrylic)
+				case "driver_no_wu":
+					_ = json.Unmarshal(v, &cfg.DriverNoWU)
 				case "schedule":
 					last := cfg.Schedule.LastRun
 					_ = json.Unmarshal(v, &cfg.Schedule)

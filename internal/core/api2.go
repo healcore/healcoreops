@@ -363,7 +363,7 @@ func (c *Core) routes2(m *http.ServeMux) {
 		if in.Port == 0 {
 			in.Port = 443
 		}
-		writeJSON(w, diag.TCPPing(strings.TrimSpace(in.Host), in.Port, 4))
+		writeJSON(w, diag.Ping(strings.TrimSpace(in.Host), in.Port, 4))
 	})
 	m.HandleFunc("POST /api/net/port", func(w http.ResponseWriter, r *http.Request) {
 		var in struct {

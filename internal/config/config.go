@@ -39,6 +39,9 @@ type Config struct {
 	AutoUpdateCheck bool   `json:"auto_update_check"`
 	SkipVersion     string `json:"skip_version"`
 
+	// Драйверы: не использовать пакеты производителей из каталога Windows Update
+	DriverNoWU bool `json:"driver_no_wu"`
+
 	// Обслуживание по расписанию (пока программа работает, в т. ч. в трее)
 	Schedule Schedule `json:"schedule"`
 }

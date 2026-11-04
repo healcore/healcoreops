@@ -9,10 +9,17 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # Подпись — только для релизов (теги v*) и только если она настроена (см. docs/SIGNING.md).
+      # Вариант А — SignPath (бесплатно для открытых проектов), вариант Б — свой сертификат .pfx.
+      IS_RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') }}
+      SIGNPATH_ON: ${{ secrets.SIGNPATH_API_TOKEN != '' && vars.SIGNPATH_ORGANIZATION_ID != '' }}
+      PFX_ON: ${{ secrets.WINDOWS_CERT_PFX != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -21,7 +28,7 @@ jobs:
           go-version: '1.24'
 
       - name: Check version matches tag
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: env.IS_RELEASE == 'true'
         run: |
           want="${GITHUB_REF_NAME#v}"
           grep -q "^VERSION=$want$" build.sh || { echo "build.sh VERSION != $want"; exit 1; }
@@ -37,6 +44,82 @@ jobs:
       - name: Build (Windows installer + Linux)
         run: sh ./build.sh
 
+      # ---------- Вариант А: SignPath ----------
+      # Сначала подписывается сама программа, затем установщик пересобирается
+      # с подписанной программой внутри и подписывается тоже.
+      - name: Upload unsigned app for signing
+        id: app-unsigned
+        if: env.IS_RELEASE == 'true' && env.SIGNPATH_ON == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-unsigned
+          path: cmd/setup/payload/HealCoreOps.exe
+
+      - name: Sign app (SignPath)
+        if: env.IS_RELEASE == 'true' && env.SIGNPATH_ON == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+          organization-id: '${{ vars.SIGNPATH_ORGANIZATION_ID }}'
+          project-slug: "${{ vars.SIGNPATH_PROJECT_SLUG || 'healcoreops' }}"
+          signing-policy-slug: "${{ vars.SIGNPATH_POLICY_SLUG || 'release-signing' }}"
+          artifact-configuration-slug: 'app'
+          github-artifact-id: '${{ steps.app-unsigned.outputs.artifact-id }}'
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: signed-app
+
+      - name: Rebuild installer with signed app
+        if: env.IS_RELEASE == 'true' && env.SIGNPATH_ON == 'true'
+        run: |
+          cp signed-app/HealCoreOps.exe cmd/setup/payload/HealCoreOps.exe
+          sh ./build.sh installer
+
+      - name: Upload unsigned installer for signing
+        id: installer-unsigned
+        if: env.IS_RELEASE == 'true' && env.SIGNPATH_ON == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-unsigned
+          path: dist/HealCoreOps-Setup.exe
+
+      - name: Sign installer (SignPath)
+        if: env.IS_RELEASE == 'true' && env.SIGNPATH_ON == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+          organization-id: '${{ vars.SIGNPATH_ORGANIZATION_ID }}'
+          project-slug: "${{ vars.SIGNPATH_PROJECT_SLUG || 'healcoreops' }}"
+          signing-policy-slug: "${{ vars.SIGNPATH_POLICY_SLUG || 'release-signing' }}"
+          artifact-configuration-slug: 'installer'
+          github-artifact-id: '${{ steps.installer-unsigned.outputs.artifact-id }}'
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: signed-installer
+
+      - name: Use signed installer
+        if: env.IS_RELEASE == 'true' && env.SIGNPATH_ON == 'true'
+        run: cp signed-installer/HealCoreOps-Setup.exe dist/HealCoreOps-Setup.exe
+
+      # ---------- Вариант Б: свой сертификат (.pfx в секретах) ----------
+      - name: Sign with own certificate
+        if: env.IS_RELEASE == 'true' && env.SIGNPATH_ON != 'true' && env.PFX_ON == 'true'
+        env:
+          PFX_B64: ${{ secrets.WINDOWS_CERT_PFX }}
+          PFX_PASS: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq osslsigncode
+          echo "$PFX_B64" | base64 -d > cert.pfx
+          sign() {
+            osslsigncode sign -pkcs12 cert.pfx -pass "$PFX_PASS" -n "$2" -i https://github.com/${{ github.repository }} \
+              -h sha256 -ts http://timestamp.digicert.com -in "$1" -out "$1.signed" && mv "$1.signed" "$1"
+            osslsigncode verify -in "$1" | grep -q "Signature verification: ok"
+          }
+          sign cmd/setup/payload/HealCoreOps.exe "HealCoreOps"
+          sh ./build.sh installer
+          sign dist/HealCoreOps-Setup.exe "HealCoreOps Setup"
+          rm -f cert.pfx
+
       - name: Checksums
         run: cd dist && sha256sum HealCoreOps-Setup.exe healcoreops-linux-amd64 > SHA256SUMS.txt && cat SHA256SUMS.txt
 
@@ -46,7 +129,7 @@ jobs:
           path: dist/*
 
       - name: Release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: env.IS_RELEASE == 'true'
         uses: softprops/action-gh-release@v2
         with:
           files: |

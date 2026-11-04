@@ -15,7 +15,6 @@ import (
 	"github.com/healcore/healcoreops/internal/diag"
 	"github.com/healcore/healcoreops/internal/diskspace"
 	"github.com/healcore/healcoreops/internal/drivers"
-	"github.com/healcore/healcoreops/internal/health"
 	"github.com/healcore/healcoreops/internal/history"
 	"github.com/healcore/healcoreops/internal/i18n"
 	"github.com/healcore/healcoreops/internal/opt"
@@ -179,7 +178,7 @@ func (c *Core) RunCheckup() Checkup {
 			}
 		})
 	}
-	h := health.Get()
+	h := freshHealth()
 	for _, d := range h.Disks {
 		hl := strings.ToLower(d.Health)
 		if d.Health != "" && hl != "healthy" && hl != "ok" && hl != "исправен" {

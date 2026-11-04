@@ -118,5 +118,17 @@ Object.assign(DICT, {
 
   pal_hw: ["Здоровье железа", "Hardware health"],
   drv_checking_all: ["Проверка всех драйверов (NVIDIA и каталог Windows Update)", "Checking all drivers (NVIDIA and the Windows Update catalog)"],
+  mode_label: ["Разделы", "Sections"], mode_simple: ["Простой режим", "Simple"], mode_admin: ["Все (администратор)", "All (administrator)"],
+  mode_help: ["Простой режим показывает главное: обзор, проверку ПК, место на диске, программы, автозагрузку, драйверы и здоровье железа. Остальные разделы — службы, реестр, сеть, снимки, обновления Windows, отчёты — в режиме администратора; найти любой раздел можно и через поиск Ctrl+K.", "Simple mode shows the essentials: overview, PC checkup, disk space, programs, startup, drivers and hardware health. Other sections — services, registry, network, snapshots, Windows Update, reports — are in administrator mode; any section can also be found with Ctrl+K."],
+  mode_show_all: ["Показать все разделы", "Show all sections"], mode_show_simple: ["Простой режим", "Simple mode"],
+  mode_now_simple: ["Простой режим: показаны главные разделы", "Simple mode: showing the essentials"], mode_now_admin: ["Показаны все разделы", "All sections shown"],
+  self_title: ["Расход самой программы", "The app's own usage"], self_total: ["Процессор %1 · память %2", "CPU %1 · memory %2"],
+  self_core: ["HealCoreOps (ядро)", "HealCoreOps (core)"],
+  self_mode_active: ["окно открыто: опрос системы каждые %1 с", "window open: polling every %1 s"],
+  self_mode_tray: ["в трее: опрос каждые %1 с", "in tray: polling every %1 s"],
+  self_help: ["Вместе с окном интерфейса (WebView2 — встроенный в Windows движок Edge) и запущенными программой утилитами. Когда окно скрыто в трей или свёрнуто, система опрашивается реже; сведения о железе собираются, только когда их смотрят или когда включены оповещения о железе (тогда — раз в 5 минут).", "Including the interface window (WebView2 — the Edge engine built into Windows) and the helper tools the app starts. When the window is in the tray or minimized, the system is polled less often; hardware data is collected only while someone looks at it or when hardware alerts are on (then every 5 minutes)."],
+  sb_title: ["Пакет для поддержки", "Support bundle"], sb_make: ["Собрать пакет для поддержки", "Create support bundle"],
+  sb_help: ["Один zip для сообщения об ошибке: отчёт о компьютере, инвентаризация, журналы программы, история изменений, настройки и последние фоновые операции. Личных файлов в нём нет; путь к папке пользователя и имя пользователя заменяются. Приложите файл к issue на GitHub или отправьте в поддержку.", "One zip for a bug report: computer report, inventory, app logs, change history, settings and recent background jobs. No personal files; the user profile path and user name are replaced. Attach it to a GitHub issue or send it to support."],
+  sb_saved: ["Пакет сохранён: %1", "Bundle saved: %1"], sb_working: ["Сбор пакета для поддержки… (до минуты)", "Creating the support bundle… (up to a minute)"],
   delete: ["Удалить", "Delete"], restart_to_apply: ["Изменение вступит в силу после перезапуска программы", "The change takes effect after restarting the app"],
 });

@@ -1,0 +1,44 @@
+name: Отчёт о тестировании / Test report
+description: Результаты проверки по docs/TESTING.md / Results of a docs/TESTING.md run
+labels: [testing]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Версия HealCoreOps / Version
+      placeholder: v1.10.0
+    validations:
+      required: true
+  - type: dropdown
+    id: machine
+    attributes:
+      label: Машина из набора / Test machine
+      options:
+        - "1 — Windows 11, NVIDIA, NVMe"
+        - "2 — ноутбук без NVIDIA / laptop without NVIDIA"
+        - "3 — Windows 10, HDD"
+        - "4 — AMD CPU + AMD GPU"
+        - "5 — без прав администратора / standard user"
+        - "другая / other"
+    validations:
+      required: true
+  - type: input
+    id: hw
+    attributes:
+      label: Windows, процессор, видеокарта, диски / Windows, CPU, GPU, drives
+      placeholder: Windows 11 24H2, Ryzen 7 7800X3D, RTX 4060 Ti, Samsung 990 PRO
+  - type: textarea
+    id: results
+    attributes:
+      label: Результаты / Results
+      description: Отметьте ❌ и ⚠️ с номерами пунктов из docs/TESTING.md. Всё, что ✅, можно не перечислять.
+      placeholder: |
+        2. Драйверы — ❌ установка NVIDIA: ...
+        3. Дубликаты — ⚠️ ...
+    validations:
+      required: true
+  - type: textarea
+    id: bundle
+    attributes:
+      label: Пакет для поддержки / Support bundle
+      description: Отчёт и защита → «Собрать пакет для поддержки» — перетащите zip сюда. Личных файлов в нём нет.

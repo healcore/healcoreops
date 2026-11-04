@@ -100,6 +100,7 @@ HealCoreOps.exe --export-profile profile.json    :: save the current profile
 HealCoreOps.exe --report [report.html|.json]     :: computer report
 HealCoreOps.exe --checkup [--json result.json]   :: PC checkup
 HealCoreOps.exe --inventory \\srv\inv\%COMPUTERNAME%.json  :: inventory (.json — everything, .csv — one row in a shared fleet table)
+HealCoreOps.exe --support-bundle [path.zip]      :: support bundle: report, logs, history (no personal files)
 HealCoreOps.exe --clean                          :: quick cleanup
 HealCoreOps.exe --maintenance sfc                :: maintenance (--list-maintenance)
 HealCoreOps.exe --tweak telemetry=on             :: tweaks (--list-tweaks)
@@ -167,6 +168,13 @@ build.bat        # Windows    → dist\HealCoreOps-Setup.exe
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md).
+
+## Code signing & privacy
+
+[Code signing policy](docs/CODE_SIGNING_POLICY.md) · [how releases are signed](docs/SIGNING.md).
+No telemetry. On its own the app only contacts GitHub once a day to read the latest version number
+(can be turned off in Settings). Everything else happens only on your action: driver lookup,
+Windows Update, network checks. Details are in the policy.
 
 ## License
 

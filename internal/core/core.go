@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"runtime/debug"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/shirou/gopsutil/v4/mem"
@@ -21,7 +22,7 @@ import (
 )
 
 // Version — версия приложения.
-const Version = "1.9.1"
+const Version = "1.10.0"
 
 // Уровни записей журнала.
 const (
@@ -65,6 +66,8 @@ type Core struct {
 
 	notify   notifyState
 	alerts   alertState
+	hidden   atomic.Bool // окно скрыто (трей) или свёрнуто
+	lastTick time.Time   // только из цикла опроса
 	loadHist *loadhist.Store
 	gmu      sync.Mutex // защищает game
 	game     gameState
@@ -101,6 +104,7 @@ func (c *Core) Start() {
 	go c.scheduleLoop()
 	go c.applyEnforcedProfile()
 	if health.Supported() {
+		c.applyHealthBackground()
 		health.Start()
 	}
 	go c.alertLoop()
@@ -170,7 +174,16 @@ func (c *Core) loop() {
 	}
 }
 
+// SetWindowVisible — видно ли окно программы. Когда оно скрыто в трее или свёрнуто,
+// система опрашивается не чаще раза в 5 секунд: правила и игровой режим работают,
+// а собственная нагрузка программы меньше.
+func (c *Core) SetWindowVisible(v bool) { c.hidden.Store(!v) }
+
 func (c *Core) tick() {
+	if c.hidden.Load() && time.Since(c.lastTick) < 5*time.Second-100*time.Millisecond {
+		return
+	}
+	c.lastTick = time.Now()
 	s := c.col.Collect()
 	c.mu.Lock()
 	c.snap = s

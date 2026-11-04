@@ -193,4 +193,5 @@ var en = map[string]string{
 	"Оповещение снято: %s":                                              "Alert cleared: %s",
 	"Создан снимок системы «%s»":                                        "System snapshot “%s” created",
 	"Нужны права администратора":                                        "Administrator rights required",
+	"Пакет для поддержки сохранён: %s":                                  "Support bundle saved: %s",
 }

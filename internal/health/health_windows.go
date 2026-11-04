@@ -22,26 +22,40 @@ func Supported() bool { return true }
 
 // Start запускает фоновое обновление снимка здоровья железа.
 func Start() {
+	// Опрос железа стоит запуска PowerShell (заметная нагрузка), поэтому он идёт
+	// только когда нужен: открыта страница со сведениями (каждые 10 с) или
+	// включены оповещения о железе (фоном, раз в несколько минут).
 	go func() {
+		var last time.Time
 		for {
-			if s, ok := collect(); ok {
-				store(s)
+			every := time.Duration(0)
+			if Active() {
+				every = 10 * time.Second
+			} else if bg := Background(); bg > 0 {
+				every = bg
 			}
-			time.Sleep(10 * time.Second)
+			if every > 0 && time.Since(last) >= every {
+				if s, ok := collect(); ok {
+					store(s)
+				}
+				last = time.Now()
+			}
+			time.Sleep(time.Second)
 		}
 	}()
-	// Видеокарты NVIDIA: температура, загрузка, вентилятор, память — каждые 2 с
-	// (nvidia-smi отвечает за доли секунды, в отличие от полного опроса через PowerShell).
+	// Видеокарты NVIDIA — каждые 2 с, но только пока сведения кто-то смотрит.
 	go func() {
 		if nvidiaSMI() == "" {
 			return
 		}
 		for {
-			if gs := nvidia(); len(gs) > 0 {
-				for i := range gs {
-					gs[i].Level = GPULevel(gs[i])
+			if Active() {
+				if gs := nvidia(); len(gs) > 0 {
+					for i := range gs {
+						gs[i].Level = GPULevel(gs[i])
+					}
+					setGPUs(gs)
 				}
-				setGPUs(gs)
 			}
 			time.Sleep(2 * time.Second)
 		}

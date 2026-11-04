@@ -70,11 +70,7 @@ func (c *Core) BuildInventory() Inventory {
 	var wg sync.WaitGroup
 	run := func(f func()) { wg.Add(1); go func() { defer wg.Done(); f() }() }
 	run(func() {
-		if hs := health.Get(); hs.Ready {
-			inv.Health = hs
-		} else {
-			inv.Health = health.CollectNow()
-		}
+		inv.Health = freshHealth()
 	})
 	run(func() { inv.Adapters = diag.Adapters() })
 	run(func() {
@@ -283,4 +279,80 @@ func writeAtomic(path string, b []byte) error {
 		return err
 	}
 	return os.Rename(tmp, path)
+}
+
+// SelfUsage — сколько ресурсов тратит сама программа (вместе с дочерними процессами:
+// окном интерфейса WebView2 и запущенными ею PowerShell).
+type SelfUsage struct {
+	CPU   float64    `json:"cpu"` // % всей мощности ЦП
+	RSS   uint64     `json:"rss"`
+	Parts []SelfPart `json:"parts"`
+	Mode  string     `json:"mode"`  // active | tray
+	Every int        `json:"every"` // интервал опроса системы, с
+}
+
+// SelfPart — один процесс программы.
+type SelfPart struct {
+	Name string  `json:"name"`
+	CPU  float64 `json:"cpu"`
+	RSS  uint64  `json:"rss"`
+	N    int     `json:"n"`
+}
+
+// SelfUsage считает расход по последнему снимку системы.
+func (c *Core) SelfUsage() SelfUsage {
+	self := c.col.Self()
+	pids := map[int32]bool{self: true}
+	var walk func(p *process.Process, depth int)
+	walk = func(p *process.Process, depth int) {
+		if depth > 4 {
+			return
+		}
+		ch, _ := p.Children()
+		for _, x := range ch {
+			if !pids[x.Pid] {
+				pids[x.Pid] = true
+				walk(x, depth+1)
+			}
+		}
+	}
+	if p, err := process.NewProcess(self); err == nil {
+		walk(p, 0)
+	}
+	u := SelfUsage{Parts: []SelfPart{}, Mode: "active", Every: c.Config().IntervalSec}
+	if c.hidden.Load() {
+		u.Mode = "tray"
+		if u.Every < 5 {
+			u.Every = 5
+		}
+	}
+	by := map[string]*SelfPart{}
+	var order []string
+	if s := c.Snapshot(); s != nil {
+		for _, p := range s.Procs {
+			if !pids[p.PID] {
+				continue
+			}
+			name := p.Name
+			if p.PID == self {
+				name = "HealCoreOps"
+			}
+			sp := by[name]
+			if sp == nil {
+				sp = &SelfPart{Name: name}
+				by[name] = sp
+				order = append(order, name)
+			}
+			sp.CPU += p.CPU
+			sp.RSS += p.RSS
+			sp.N++
+			u.CPU += p.CPU
+			u.RSS += p.RSS
+		}
+	}
+	for _, n := range order {
+		u.Parts = append(u.Parts, *by[n])
+	}
+	sort.Slice(u.Parts, func(i, j int) bool { return u.Parts[i].RSS > u.Parts[j].RSS })
+	return u
 }

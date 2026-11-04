@@ -110,8 +110,8 @@ function showPage(name) {
   if (name === "drivers") loadDrivers(false);
   if (name === "registry" && !REG_ISSUES) $("regList").innerHTML = `<div class="muted" style="padding:20px 4px">${t("reg_intro")}</div>`;
   if (name === "overview") Object.values(sparks).forEach(s => s.draw());
+  state.page = name; // до обработчиков — они проверяют, какая страница открыта
   if (typeof onPageShow === "function") onPageShow(name);
-  state.page = name;
   $("main").scrollTop = 0;
 }
 document.querySelectorAll("#nav button").forEach(b => b.onclick = () => showPage(b.dataset.page));

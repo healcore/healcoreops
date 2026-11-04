@@ -161,6 +161,14 @@ func showMainWindow() {
 	procShowWindow.Call(trayHwnd, swShow)
 	procShowWindow.Call(trayHwnd, swRestore)
 	procSetForeground.Call(trayHwnd)
+	setVisible(true)
+}
+
+// setVisible сообщает ядру, видно ли окно: в трее и свёрнутым программа опрашивает систему реже.
+func setVisible(v bool) {
+	if trayCore != nil {
+		trayCore.SetWindowVisible(v)
+	}
 }
 
 // requestQuit закрывает приложение по-настоящему (минуя сворачивание в трей).
@@ -266,7 +274,14 @@ func trayWndProc(hwnd, msg, wparam, lparam uintptr) uintptr {
 	case wmClose:
 		if atomic.LoadInt32(&quitting) == 0 && closeTray != nil && closeTray() {
 			procShowWindow.Call(hwnd, swHide)
+			setVisible(false)
 			return 0
+		}
+	case 0x0005: // WM_SIZE: 1 — свёрнуто, 0/2 — обычное или развёрнутое
+		if wparam == 1 {
+			setVisible(false)
+		} else if wparam == 0 || wparam == 2 {
+			setVisible(true)
 		}
 	}
 	r, _, _ := procCallWindowProc.Call(origProc, hwnd, msg, wparam, lparam)

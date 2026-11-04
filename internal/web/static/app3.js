@@ -10,7 +10,7 @@ const dayHM = ms => new Date(ms).toLocaleString(loc(), { day: "2-digit", month: 
 function onPageShow3(name, force) {
   const f = { loadhist: () => loadLoadHist(), hwhealth: () => loadHw(force), wu: () => loadWu(force), snaps: () => loadSnaps() }[name];
   if (f) f();
-  if (name === "settings") renderAlertSettings();
+  if (name === "settings") { renderAlertSettings(); applyMode(); loadSelf(); }
   if (name === "overview") loadAlerts();
   if (name === "network") { const a = document.querySelector("#page-network .subtabs .active"); if (a) onSubShow3(a.dataset.sub, force); }
   if (name !== "network") stopConnsAuto();
@@ -473,6 +473,13 @@ async function saveInventory(fmt, btn) {
 $("invJson").onclick = () => saveInventory("json", $("invJson"));
 $("invCsv").onclick = () => saveInventory("csv", $("invCsv"));
 
+// ---------- Пакет для поддержки ----------
+async function makeSupportBundle(btn) {
+  const run = async () => { const p = await api("support-bundle", {}); toast(t("sb_saved", p)); };
+  try { btn ? await busy(btn, run) : await run(); } catch (e) { toast(e.message, true); }
+}
+$("sbMake").onclick = () => makeSupportBundle($("sbMake"));
+
 // ---------- Настройки оповещений ----------
 function renderAlertSettings() {
   const a = CFG.alerts || {};
@@ -509,6 +516,40 @@ $("alSvcAdd").onclick = addWatchedService;
 $("alSvcInput").addEventListener("keydown", e => { if (e.key === "Enter") addWatchedService(); });
 $("lhDays").onchange = async () => { await setCfg({ load_history_days: Number($("lhDays").value) }); toast(t("restart_to_apply")); };
 
+// ---------- Простой режим ----------
+// Главные разделы для обычного пользователя; остальное — в режиме администратора
+// (и всегда доступно через поиск Ctrl+K).
+const SIMPLE_PAGES = new Set(["overview", "optimize", "disk", "programs", "autostart", "drivers", "hwhealth", "history", "settings"]);
+function applyMode() {
+  const simple = CFG.mode === "simple";
+  document.querySelectorAll("#nav button[data-page]").forEach(b => b.classList.toggle("mode-hidden", simple && !SIMPLE_PAGES.has(b.dataset.page)));
+  $("navModeText").textContent = t(simple ? "mode_show_all" : "mode_show_simple");
+  $("modeSeg").querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.v === CFG.mode));
+  tidyNav();
+}
+async function setMode(m) {
+  if (m === CFG.mode) return;
+  await setCfg({ mode: m });
+  applyMode();
+  toast(t(m === "simple" ? "mode_now_simple" : "mode_now_admin"));
+}
+$("navMode").onclick = () => setMode(CFG.mode === "simple" ? "admin" : "simple");
+$("modeSeg").querySelectorAll("button").forEach(b => b.onclick = () => setMode(b.dataset.v));
+
+// ---------- Расход самой программы ----------
+let selfTimer = null;
+async function loadSelf() {
+  clearTimeout(selfTimer);
+  if (state.page !== "settings") return;
+  try {
+    const u = await api("self");
+    $("selfTotal").textContent = t("self_total", fmtPct(u.cpu), bytes(u.rss));
+    $("selfMode").textContent = t(u.mode === "tray" ? "self_mode_tray" : "self_mode_active", u.every);
+    $("selfParts").innerHTML = u.parts.map(p => `<div class="hrow"><span class="hn">${esc(p.name === "HealCoreOps" ? t("self_core") : p.name)}${p.n > 1 ? ` <span class="muted">×${p.n}</span>` : ""}</span><span class="hv">${fmtPct(p.cpu)} · ${bytes(p.rss)}</span></div>`).join("");
+  } catch {}
+  selfTimer = setTimeout(loadSelf, 3000);
+}
+
 // ---------- Запуск ----------
 function init3() {
   $("navWu").classList.toggle("hidden", !HOST.diag);
@@ -516,7 +557,7 @@ function init3() {
   $("navSnaps").classList.toggle("hidden", !HOST.sysadmin && !HOST.programs);
   lhRangeLabels();
   renderAlertSettings();
-  tidyNav();
+  applyMode();
   loadAlerts();
   setInterval(loadAlerts, 60 * 1000);
 }

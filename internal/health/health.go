@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -119,6 +120,23 @@ func Get() Snapshot {
 	cp.Disks = append([]Disk(nil), snap.Disks...)
 	return cp
 }
+
+var (
+	wantAt  atomic.Int64 // когда сведения в последний раз запрашивали (unix-мс)
+	bgEvery atomic.Int64 // фоновый опрос для оповещений, нс (0 — не нужен)
+)
+
+// Want отмечает, что сведения сейчас кто-то смотрит (интерфейс): опрос становится частым.
+func Want() { wantAt.Store(time.Now().UnixMilli()) }
+
+// Active — сведения запрашивали в последние 45 секунд.
+func Active() bool { return time.Now().UnixMilli()-wantAt.Load() < 45_000 }
+
+// SetBackground задаёт фоновый опрос (для оповещений); 0 — без фонового опроса.
+func SetBackground(d time.Duration) { bgEvery.Store(int64(d)) }
+
+// Background — интервал фонового опроса.
+func Background() time.Duration { return time.Duration(bgEvery.Load()) }
 
 // setGPUs обновляет только сведения о видеокартах (быстрый опрос).
 func setGPUs(gs []GPU) {

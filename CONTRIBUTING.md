@@ -31,11 +31,13 @@ go vet ./... && GOOS=windows go vet ./... && go test ./...
 
 1. Поднимите номер в `build.sh`, `build.bat`, `internal/core/core.go` (`Version`) и `cmd/setup/main_windows.go` (`appVersion`).
 2. Допишите раздел в `CHANGELOG.md`.
-3. Создайте тег и отправьте его:
+3. Прогоните [чек-лист тестирования](docs/TESTING.md) на реальных машинах (разделы 1–2 — обязательно).
+4. Создайте тег и отправьте его:
 
    ```sh
-   git tag v1.8.1 && git push origin v1.8.1
+   git tag v1.10.0 && git push origin v1.10.0
    ```
 
 GitHub Actions проверит, что номер версии совпадает с тегом, соберёт установщик и Linux-версию,
-посчитает SHA-256 и опубликует релиз с этими файлами.
+подпишет их (если подпись настроена — см. [docs/SIGNING.md](docs/SIGNING.md); в SignPath нужно
+одобрить запрос), посчитает SHA-256 и опубликует релиз с этими файлами.

@@ -95,7 +95,7 @@ func (c *Core) BuildReport() Report {
 	var wg sync.WaitGroup
 	run := func(f func()) { wg.Add(1); go func() { defer wg.Done(); f() }() }
 	run(func() { r.Reboot = diag.PendingReboot() })
-	run(func() { r.Health = health.Get() })
+	run(func() { r.Health = freshHealth() })
 	run(func() { r.Adapters = diag.Adapters() })
 	if drivers.Supported() {
 		run(func() {

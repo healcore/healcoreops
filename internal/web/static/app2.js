@@ -589,6 +589,7 @@ function palSource() {
   });
   const act = (k, run, kw = "") => out.push({ kind: "pal_action", label: t(k), kw: kw + " " + both(k), run });
   act("act_checkup", () => { showPage("optimize"); runCheckup(); }, "check scan проверка");
+  act("sb_make", () => { toast(t("sb_working")); makeSupportBundle(); }, "support bug report zip поддержка ошибка");
   act("free_mem", () => api("opt/trim", {}).then(m => toast(m)).catch(e => toast(e.message, true)), "ram memory память");
   if (!polBlocks("disk")) act("act_quickclean", () => api("quickclean", {}).then(r => toast(t("cleaned", bytes(r.freed)))).catch(e => toast(e.message, true)), "junk temp мусор");
   act("rp_make", () => { showPage("report"); $("rpMake").click(); }, "report отчёт");
@@ -662,7 +663,7 @@ function tidyNav() {
   const flush = () => { if (head) head.classList.toggle("hidden", !any); };
   [...$("nav").children].forEach(el => {
     if (el.classList.contains("nav-group")) { flush(); head = el; any = false; }
-    else if (el.dataset.page && !el.classList.contains("hidden")) any = true;
+    else if (el.dataset.page && !el.classList.contains("hidden") && !el.classList.contains("mode-hidden")) any = true;
     else if (el.classList.contains("side-spacer")) { flush(); head = null; }
   });
   flush();

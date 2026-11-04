@@ -132,7 +132,10 @@ func (c *Core) routes3(m *http.ServeMux) {
 	// ---- Здоровье железа и оповещения ----
 	m.HandleFunc("GET /api/alerts", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, c.Alerts()) })
 	m.HandleFunc("POST /api/alerts/check", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, nz(c.CheckAlerts())) })
-	m.HandleFunc("POST /api/health/refresh", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, health.CollectNow()) })
+	m.HandleFunc("POST /api/health/refresh", func(w http.ResponseWriter, r *http.Request) {
+		health.Want()
+		writeJSON(w, health.CollectNow())
+	})
 
 	// ---- История нагрузки ----
 	m.HandleFunc("GET /api/loadhist", func(w http.ResponseWriter, r *http.Request) {
@@ -404,6 +407,17 @@ func (c *Core) routes3(m *http.ServeMux) {
 		}
 		writeJSON(w, true)
 	})
+
+	m.HandleFunc("POST /api/support-bundle", func(w http.ResponseWriter, r *http.Request) {
+		p, err := c.SupportBundle("")
+		if err != nil {
+			writeErr(w, err)
+			return
+		}
+		_ = diskspace.Reveal(p)
+		writeJSON(w, p)
+	})
+	m.HandleFunc("GET /api/self", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, c.SelfUsage()) })
 
 	// ---- Инвентаризация ----
 	m.HandleFunc("POST /api/inventory", func(w http.ResponseWriter, r *http.Request) {

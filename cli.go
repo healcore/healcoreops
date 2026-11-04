@@ -26,7 +26,7 @@ const (
 )
 
 var cliCommands = []string{"--help", "-h", "/?", "--apply", "--export-profile", "--report", "--checkup", "--clean",
-	"--maintenance", "--list-tweaks", "--tweak", "--list-maintenance", "--version", "--inventory"}
+	"--maintenance", "--list-tweaks", "--tweak", "--list-maintenance", "--version", "--inventory", "--support-bundle"}
 
 // isCLI — запущены ли с командой (без окна).
 func isCLI(args []string) bool {
@@ -94,6 +94,7 @@ func usage() string {
   HealCoreOps.exe --inventory путь.json|путь.csv   инвентаризация: .json — всё о ПК, .csv — строка в общую
                                                    таблицу парка; %COMPUTERNAME% в пути — имя компьютера.
                                                    Пример: --inventory \\server\inv\%COMPUTERNAME%.json
+  HealCoreOps.exe --support-bundle [путь.zip]      пакет для поддержки: отчёт, журналы, история (без личных файлов)
   HealCoreOps.exe --clean                          быстрая очистка (временные файлы, отчёты, эскизы)
   HealCoreOps.exe --maintenance sfc                операция обслуживания (список: --list-maintenance)
   HealCoreOps.exe --tweak id=on --tweak id2=off    включить/выключить твики (список: --list-tweaks)
@@ -110,6 +111,7 @@ func usage() string {
   HealCoreOps.exe --inventory path.json|path.csv   inventory: .json — everything about the PC, .csv — one row
                                                    in a shared fleet table; %COMPUTERNAME% in the path is replaced.
                                                    Example: --inventory \\server\inv\%COMPUTERNAME%.json
+  HealCoreOps.exe --support-bundle [path.zip]      support bundle: report, logs, history (no personal files)
   HealCoreOps.exe --clean                          quick cleanup (temp files, error reports, thumbnails)
   HealCoreOps.exe --maintenance sfc                maintenance action (list: --list-maintenance)
   HealCoreOps.exe --tweak id=on --tweak id2=off    turn tweaks on/off (list: --list-tweaks)
@@ -230,6 +232,18 @@ func runCLI(args []string) int {
 			}
 			return exitPartial
 		}
+		return exitOK
+
+	case hasFlag(args, "--support-bundle"):
+		path, _ := argVal(args, "--support-bundle")
+		c.Prime()
+		out.printf("%s\n", i18n.Pick("Сбор сведений… (до минуты)", "Collecting data… (up to a minute)"))
+		p, err := c.SupportBundle(path)
+		if err != nil {
+			out.printf("%v\n", err)
+			return exitError
+		}
+		out.printf("%s %s\n", i18n.Pick("Сохранено:", "Saved:"), p)
 		return exitOK
 
 	case hasFlag(args, "--report"):

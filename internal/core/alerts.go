@@ -150,6 +150,26 @@ func (c *Core) Alerts() []Alert {
 	return out
 }
 
+// freshHealth — сведения о железе не старше 15 минут (иначе — собрать сейчас).
+func freshHealth() health.Snapshot {
+	h := health.Get()
+	if !health.Supported() || (h.Ready && time.Since(time.UnixMilli(h.Updated)) < 15*time.Minute) {
+		return h
+	}
+	return health.CollectNow()
+}
+
+// applyHealthBackground — фоновый опрос железа нужен, только если включены
+// оповещения о дисках, видеокарте или батарее; тогда — раз в 5 минут.
+func (c *Core) applyHealthBackground() {
+	a := c.Config().Alerts
+	if a.Enabled && (a.DiskHealth || a.DiskTemp > 0 || a.GPUTemp > 0 || a.Battery) {
+		health.SetBackground(5 * time.Minute)
+	} else {
+		health.SetBackground(0)
+	}
+}
+
 func (c *Core) alertLoop() {
 	time.Sleep(90 * time.Second) // дать собраться сведениям о железе
 	for {

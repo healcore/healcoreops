@@ -44,6 +44,9 @@ type Config struct {
 	// Оповещения по порогам (уведомление в трее и запись в журнал Windows)
 	Alerts Alerts `json:"alerts"`
 
+	// Режим интерфейса: simple — только главные разделы, admin — все
+	Mode string `json:"mode"`
+
 	// История нагрузки: сколько дней хранить (0 — не вести)
 	LoadHistoryDays int `json:"load_history_days"`
 }
@@ -105,6 +108,11 @@ func Load() *Config {
 	b, err := os.ReadFile(Path())
 	if err == nil {
 		_ = json.Unmarshal(b, c)
+		if c.Mode == "" {
+			c.Mode = "admin" // обновление со старой версии — оставляем все разделы, как было
+		}
+	} else {
+		c.Mode = "simple" // первый запуск — простой режим
 	}
 	c.Normalize()
 	return c
@@ -153,6 +161,9 @@ func (c *Config) Normalize() {
 	}
 	if len(a.Services) > 30 {
 		a.Services = a.Services[:30]
+	}
+	if c.Mode != "simple" && c.Mode != "admin" {
+		c.Mode = "admin"
 	}
 	if c.LoadHistoryDays < 0 || c.LoadHistoryDays > 31 {
 		c.LoadHistoryDays = 7

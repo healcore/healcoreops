@@ -276,7 +276,10 @@ func (c *Core) routes(m *http.ServeMux) {
 	})
 
 	// ---- Здоровье железа ----
-	m.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, health.Get()) })
+	m.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
+		health.Want() // сведения смотрят — опрашивать часто
+		writeJSON(w, health.Get())
+	})
 
 	// ---- Драйверы ----
 	m.HandleFunc("GET /api/drivers", func(w http.ResponseWriter, r *http.Request) {
@@ -494,6 +497,8 @@ func (c *Core) routes(m *http.ServeMux) {
 					_ = json.Unmarshal(v, &cfg.RunAtStartup)
 				case "alerts":
 					_ = json.Unmarshal(v, &cfg.Alerts)
+				case "mode":
+					_ = json.Unmarshal(v, &cfg.Mode)
 				case "load_history_days":
 					_ = json.Unmarshal(v, &cfg.LoadHistoryDays)
 				case "driver_no_wu":
@@ -507,6 +512,9 @@ func (c *Core) routes(m *http.ServeMux) {
 			cfg.Normalize()
 		})
 		cfg := c.Config()
+		if _, ok := in["alerts"]; ok {
+			c.applyHealthBackground()
+		}
 		if _, ok := in["run_at_startup"]; ok {
 			if err := autostart.SetSelfStartup(cfg.RunAtStartup); err != nil {
 				c.Log(LvlErr, i18n.T("Автозапуск: %v"), err)

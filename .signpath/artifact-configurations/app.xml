@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SignPath: подпись программы HealCoreOps.exe (артефакт GitHub — zip с одним файлом).
+     Создайте в проекте SignPath конфигурацию артефакта со slug «app» и этим содержимым. -->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <zip-file>
+    <pe-file path="HealCoreOps.exe" product-name="HealCoreOps">
+      <authenticode-sign />
+    </pe-file>
+  </zip-file>
+</artifact-configuration>

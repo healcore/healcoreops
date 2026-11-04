@@ -149,6 +149,7 @@ func runHost(c *core.Core, url string) {
 	// Запуск из автозагрузки с ключом --minimized: сразу в трей.
 	if minimizedStart() && cfg.CloseToTray {
 		procShowWindow.Call(hwnd, swHide)
+		c.SetWindowVisible(false)
 	}
 
 	wv.SetSize(int(980*scale), int(640*scale), webview2.HintMin)

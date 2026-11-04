@@ -5,10 +5,20 @@
 #   ./build.sh          → dist/HealCoreOps-Setup.exe + dist/healcoreops-linux-amd64
 set -e
 cd "$(dirname "$0")"
-VERSION=1.9.1
+VERSION=1.10.0
 export CGO_ENABLED=0
 
 command -v go >/dev/null || { echo "Нужен Go 1.22+: https://go.dev/dl/"; exit 1; }
+
+# ./build.sh installer — пересобрать только установщик из уже готового (например,
+# подписанного) cmd/setup/payload/HealCoreOps.exe. Используется при подписи в CI.
+if [ "$1" = "installer" ]; then
+  test -f cmd/setup/payload/HealCoreOps.exe || { echo "нет cmd/setup/payload/HealCoreOps.exe — сначала ./build.sh"; exit 1; }
+  mkdir -p dist
+  GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w -H windowsgui" -o dist/HealCoreOps-Setup.exe ./cmd/setup
+  ls -lh dist/HealCoreOps-Setup.exe
+  exit 0
+fi
 mkdir -p dist cmd/setup/payload
 
 echo "[1/5] Зависимости"

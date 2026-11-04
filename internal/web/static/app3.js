@@ -152,19 +152,30 @@ function renderLhMoment() {
 window.addEventListener("resize", () => { if (state.page === "loadhist") drawLoadHist(); });
 
 // ---------- Здоровье железа ----------
-let HW = null;
+let HW = null, hwTimer = null;
+// Пока страница открыта — обновлять каждые 2 с (видеокарта — каждые 2 с, диски и батарея — раз в 10 с).
+function hwAuto() {
+  clearTimeout(hwTimer);
+  hwTimer = setTimeout(async () => {
+    if (state.page !== "hwhealth" || document.hidden) return;
+    try { HW = await api("health"); renderHw(); } catch {}
+    hwAuto();
+  }, 2000);
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden && state.page === "hwhealth") hwAuto(); });
 async function loadHw(force) {
   if (!HOST.health) { $("hwUnsupported").classList.remove("hidden"); $("hwMain").classList.add("hidden"); return; }
   if (force) { await busy($("hwReload"), async () => { HW = await api("health/refresh", {}); }); }
   else { try { HW = await api("health"); } catch (e) { toast(e.message, true); return; } }
   renderHw();
+  hwAuto();
 }
 $("hwReload").onclick = () => loadHw(true);
 function hwBadge(l) { return `<span class="tag ${l === 2 ? "solid" : ""}">${tm("hw_lvl", l) || t("hw_lvl")[l]}</span>`; }
 function kvRows(rows) { return `<div class="kv hw-kv">${rows.filter(Boolean).map(([k, v]) => `<span>${esc(k)}</span><span>${v}</span>`).join("")}</div>`; }
 function renderHw() {
   const h = HW || {};
-  if (!h.ready) { $("hwDisks").innerHTML = loadingHTML("hw_waiting"); setTimeout(() => { if (state.page === "hwhealth") loadHw(false); }, 4000); return; }
+  if (!h.ready) { if (!$("hwDisks").querySelector(".loading")) $("hwDisks").innerHTML = loadingHTML("hw_waiting"); return; }
   $("hwUpdated").textContent = t("hw_updated", new Date(h.updated).toLocaleTimeString(loc()));
   const lvls = t("hw_lvl");
   const unknownWear = (h.disks || []).every(d => !d.tempC && !d.wearPct && !d.powerOnH);

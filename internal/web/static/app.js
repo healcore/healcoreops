@@ -678,7 +678,8 @@ function renderDrvProgress(job) {
   $("drvProgress").classList.toggle("hidden", !running && !lines.length);
   $("drvProgress").classList.toggle("done", !running);
   const last = [...lines].reverse().find(l => l.trim()) || t("driver_working");
-  $("drvProgText").textContent = running ? last.replace(/^[▸\s]+/, "") : (job.ok ? t("drv_done_ok") : t("drv_done_err")) + " " + last.replace(/^[✓×▸!\s]+/, "");
+  const kind = (job && job.phase) || drvJobKind;
+  $("drvProgText").textContent = running ? (kind === "check" ? t("drv_checking_all") + " — " : "") + last.replace(/^[▸•\s]+/, "") : (job.ok ? t("drv_done_ok") : t("drv_done_err")) + " " + last.replace(/^[✓×▸!\s]+/, "");
   $("drvLog").innerHTML = lines.map(l => `<div>${esc(l)}</div>`).join("");
   $("drvLog").classList.toggle("hidden", !drvLogOpen);
   if (drvLogOpen) $("drvLog").scrollTop = 1e9;

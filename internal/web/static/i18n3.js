@@ -117,5 +117,6 @@ Object.assign(DICT, {
   inv_json: ["Сохранить JSON", "Save JSON"], inv_csv: ["Сохранить строку CSV", "Save CSV row"], inv_saved: ["Сохранено: %1", "Saved: %1"],
 
   pal_hw: ["Здоровье железа", "Hardware health"],
+  drv_checking_all: ["Проверка всех драйверов (NVIDIA и каталог Windows Update)", "Checking all drivers (NVIDIA and the Windows Update catalog)"],
   delete: ["Удалить", "Delete"], restart_to_apply: ["Изменение вступит в силу после перезапуска программы", "The change takes effect after restarting the app"],
 });

@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 // GPU — сведения о видеокарте.
@@ -117,6 +118,16 @@ func Get() Snapshot {
 	cp.GPUs = append([]GPU(nil), snap.GPUs...)
 	cp.Disks = append([]Disk(nil), snap.Disks...)
 	return cp
+}
+
+// setGPUs обновляет только сведения о видеокартах (быстрый опрос).
+func setGPUs(gs []GPU) {
+	mu.Lock()
+	snap.GPUs = gs
+	if snap.Ready {
+		snap.Updated = time.Now().UnixMilli()
+	}
+	mu.Unlock()
 }
 
 func store(s Snapshot) {

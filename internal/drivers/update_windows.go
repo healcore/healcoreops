@@ -292,25 +292,54 @@ func doCheck(allowWU bool, emit func(string)) (map[string]Avail, error) {
 		}
 	}
 	res := map[string]Avail{}
+	var nv []Device
 	for _, d := range devs {
 		if IsNvidiaGPU(d) {
-			emit("▸ " + i18n.Pick("NVIDIA: поиск последнего драйвера…", "NVIDIA: looking up the latest driver…"))
-			if a, err := nvCheck(d, emit); err == nil {
-				res[d.ID] = a
-			} else {
-				emit("  NVIDIA: " + err.Error())
-			}
+			nv = append(nv, d)
+		}
+	}
+	steps := len(nv)
+	if allowWU {
+		steps++
+	}
+	emit(fmt.Sprintf("▸ "+i18n.Pick("Поиск обновлений для %d устройств…", "Checking %d devices for updates…"), len(devs)))
+	if steps == 0 {
+		emit("  " + i18n.Pick("Источник Windows Update выключен, а видеокарты NVIDIA нет — проверять негде.", "Windows Update source is off and there's no NVIDIA GPU — nothing to check."))
+	}
+
+	// Каталог Windows Update — самый долгий шаг, поэтому запускаем его сразу,
+	// параллельно с проверкой NVIDIA.
+	type wuRes struct {
+		ups []WUDriver
+		err error
+	}
+	wuCh := make(chan wuRes, 1)
+	if allowWU {
+		emit("▸ " + i18n.Pick("Каталог Windows Update: поиск драйверов производителей для всех устройств… (до пары минут)", "Windows Update catalog: searching manufacturers' drivers for all devices… (up to a couple of minutes)"))
+		go func() {
+			ups, err := wuSearch()
+			wuCh <- wuRes{ups, err}
+		}()
+	}
+	for _, d := range nv {
+		emit("▸ " + i18n.Pick("NVIDIA (nvidia.com): ", "NVIDIA (nvidia.com): ") + d.Name)
+		if a, err := nvCheck(d, emit); err == nil {
+			res[d.ID] = a
+		} else {
+			emit("  NVIDIA: " + err.Error())
 		}
 	}
 	var matched map[string][]WUDriver
 	if allowWU {
-		emit("▸ " + i18n.Pick("Поиск драйверов производителей в каталоге Windows Update… (до пары минут)", "Searching manufacturers' drivers in the Windows Update catalog… (up to a couple of minutes)"))
-		ups, err := wuSearch()
-		if err != nil {
-			emit("  Windows Update: " + err.Error())
+		if len(nv) > 0 {
+			emit("▸ " + i18n.Pick("Ожидание ответа каталога Windows Update…", "Waiting for the Windows Update catalog…"))
+		}
+		r := <-wuCh
+		if r.err != nil {
+			emit("  Windows Update: " + r.err.Error())
 		} else {
-			matched = MatchWU(devs, ups)
-			emit(fmt.Sprintf("  %s %d", i18n.Pick("найдено пакетов:", "packages found:"), len(ups)))
+			matched = MatchWU(devs, r.ups)
+			emit(fmt.Sprintf("  Windows Update: %s %d, %s %d", i18n.Pick("пакетов в каталоге:", "packages in catalog:"), len(r.ups), i18n.Pick("подходят к устройствам:", "match devices:"), len(matched)))
 		}
 	}
 	for _, d := range devs {
@@ -344,6 +373,15 @@ func doCheck(allowWU bool, emit func(string)) (map[string]Avail, error) {
 	for _, a := range res {
 		if a.HasUpdate() {
 			n++
+		}
+	}
+	for _, d := range devs {
+		if a, ok := res[d.ID]; ok && a.HasUpdate() {
+			cur := a.Current
+			if cur == "" {
+				cur = "—"
+			}
+			emit(fmt.Sprintf("  • %s: %s → %s", d.Name, cur, a.Version))
 		}
 	}
 	emit(fmt.Sprintf("✓ %s %d", i18n.Pick("Устройств с доступным обновлением:", "Devices with an available update:"), n))

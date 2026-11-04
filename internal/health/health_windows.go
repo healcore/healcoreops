@@ -30,6 +30,22 @@ func Start() {
 			time.Sleep(10 * time.Second)
 		}
 	}()
+	// Видеокарты NVIDIA: температура, загрузка, вентилятор, память — каждые 2 с
+	// (nvidia-smi отвечает за доли секунды, в отличие от полного опроса через PowerShell).
+	go func() {
+		if nvidiaSMI() == "" {
+			return
+		}
+		for {
+			if gs := nvidia(); len(gs) > 0 {
+				for i := range gs {
+					gs[i].Level = GPULevel(gs[i])
+				}
+				setGPUs(gs)
+			}
+			time.Sleep(2 * time.Second)
+		}
+	}()
 }
 
 // Единый скрипт собирает всё за один запуск PowerShell и отдаёт JSON.
@@ -178,17 +194,20 @@ func (errTimeout) Error() string { return "timeout" }
 func elevated() bool { return windows.GetCurrentProcessToken().IsElevated() }
 
 // nvidia — показатели видеокарт NVIDIA через официальную утилиту драйвера.
-func nvidia() []GPU {
-	exe := ""
+func nvidiaSMI() string {
 	for _, p := range []string{
 		filepath.Join(os.Getenv("SystemRoot"), "System32", "nvidia-smi.exe"),
 		filepath.Join(os.Getenv("ProgramFiles"), "NVIDIA Corporation", "NVSMI", "nvidia-smi.exe"),
 	} {
 		if _, err := os.Stat(p); err == nil {
-			exe = p
-			break
+			return p
 		}
 	}
+	return ""
+}
+
+func nvidia() []GPU {
+	exe := nvidiaSMI()
 	if exe == "" {
 		return nil
 	}

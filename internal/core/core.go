@@ -20,7 +20,7 @@ import (
 )
 
 // Version — версия приложения.
-const Version = "1.8.3"
+const Version = "1.8.4"
 
 // Уровни записей журнала.
 const (

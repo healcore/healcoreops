@@ -58,7 +58,9 @@ const (
 )
 
 // applyAcrylic включает или выключает размытие фона окна.
-func applyAcrylic(hwnd uintptr, on, dark bool) {
+// level — «плотность стекла» 40–100 (из настройки прозрачности): чем меньше,
+// тем сильнее просвечивает размытый фон. Текст при этом не становится прозрачным.
+func applyAcrylic(hwnd uintptr, on, dark bool, level int) {
 	// Windows 11 22H2+ — «правильный» системный фон через DWM.
 	if windowsBuild() >= 22621 && procDwmSetAttr2.Find() == nil {
 		v := int32(dwmBackdropNone)
@@ -75,14 +77,28 @@ func applyAcrylic(hwnd uintptr, on, dark bool) {
 	if on {
 		a.AccentState = accentEnableAcrylicBlur
 		a.AccentFlags = 2
-		// Тон подложки: AABBGGRR. Плотная тёмная заливка — лёгкое «стекло»,
-		// а не сквозное окно: сквозь блюр не читается рабочий стол под окном.
+		// Тон подложки: AABBGGRR, строго нейтральный серый. Тонировка плотная,
+		// поэтому обои под окном видны лишь как светотень — без цвета,
+		// интерфейс остаётся чёрно-серым на любом рабочем столе.
+		alpha := glassTint(level)
 		if dark {
-			a.GradientColor = 0xF4101014
+			a.GradientColor = alpha<<24 | 0x111111
 		} else {
-			a.GradientColor = 0xF4ECECEC
+			a.GradientColor = alpha<<24 | 0xF0F0F0
 		}
 	}
 	data := winCompAttrData{Attribute: wcaAccentPolicy, Data: unsafe.Pointer(&a), SizeOfData: unsafe.Sizeof(a)}
 	procSetWinCompAttr.Call(hwnd, uintptr(unsafe.Pointer(&data)))
+}
+
+// glassTint — непрозрачность тона подложки (0–255) для уровня 40–100.
+func glassTint(level int) uint32 {
+	if level < 40 {
+		level = 40
+	}
+	if level > 100 {
+		level = 100
+	}
+	// 40 % → 0xDC (≈86 %), 100 % → 0xF2 (≈95 %)
+	return uint32(0xDC + (0xF2-0xDC)*(level-40)/60)
 }

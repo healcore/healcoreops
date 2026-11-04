@@ -277,17 +277,3 @@ func subclass(hwnd uintptr) {
 	cb := windows.NewCallback(trayWndProc)
 	origProc, _, _ = procSetWindowLong.Call(hwnd, nIndex(gwlpWndProc), cb)
 }
-
-// applyOpacity задаёт прозрачность окна (40–100 %). Совместимо с Windows 7/10/11.
-func applyOpacity(hwnd uintptr, pct int) {
-	if pct < 40 {
-		pct = 40
-	}
-	if pct > 100 {
-		pct = 100
-	}
-	ex, _, _ := procGetWindowLong.Call(hwnd, nIndex(gwlExStyle))
-	procSetWindowLong.Call(hwnd, nIndex(gwlExStyle), ex|wsExLayered)
-	alpha := byte(255 * pct / 100)
-	procSetLayered.Call(hwnd, 0, uintptr(alpha), lwaAlpha)
-}

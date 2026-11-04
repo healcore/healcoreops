@@ -3,7 +3,7 @@ chcp 65001 >nul
 rem Сборка HealCoreOps в Windows. Нужен только Go (https://go.dev/dl/), компилятор C не требуется.
 setlocal
 cd /d "%~dp0"
-set VERSION=1.8.3
+set VERSION=1.8.4
 set CGO_ENABLED=0
 set GOOS=windows
 set GOARCH=amd64

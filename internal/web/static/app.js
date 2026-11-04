@@ -866,9 +866,21 @@ function renderGames() {
 $("gameMode").onchange = () => setCfg({ game_mode: $("gameMode").checked });
 $("notify").onchange = () => setCfg({ notify: $("notify").checked });
 $("autoUpdate").onchange = () => setCfg({ auto_update_check: $("autoUpdate").checked });
-$("opacity").oninput = () => $("opacityLbl").textContent = $("opacity").value + "%";
-$("opacity").onchange = () => setCfg({ opacity: Number($("opacity").value) });
-function applyAcrylicClass() { document.documentElement.toggleAttribute("data-acrylic", !!CFG.acrylic); }
+// Стекло: ползунок 40–100 задаёт плотность фонов (текст не прозрачен).
+function applyGlass(level, acrylic) {
+  const v = Math.max(40, Math.min(100, Number(level) || 100));
+  const k = (v - 40) / 60; // 0 — максимально прозрачно, 1 — почти плотно
+  const r = document.documentElement.style;
+  const pct = (lo, hi) => (lo + (hi - lo) * k).toFixed(1) + "%";
+  r.setProperty("--g-bg", pct(55, 90));
+  r.setProperty("--g-side", pct(72, 94));
+  r.setProperty("--g-card", pct(82, 97));
+  r.setProperty("--g-ctl", pct(88, 98));
+  document.documentElement.toggleAttribute("data-acrylic", !!acrylic || v < 100);
+}
+function applyAcrylicClass() { applyGlass(CFG.opacity || 100, CFG.acrylic); }
+$("opacity").oninput = () => { $("opacityLbl").textContent = $("opacity").value + "%"; applyGlass($("opacity").value, CFG.acrylic); };
+$("opacity").onchange = async () => { await setCfg({ opacity: Number($("opacity").value) }); applyAcrylicClass(); };
 $("acrylic").onchange = async () => { await setCfg({ acrylic: $("acrylic").checked }); applyAcrylicClass(); };
 $("closeTray").onchange = () => setCfg({ close_to_tray: $("closeTray").checked });
 $("runStartup").onchange = async () => { await setCfg({ run_at_startup: $("runStartup").checked }); toast($("runStartup").checked ? t("startup_on") : t("startup_off")); };
@@ -978,7 +990,7 @@ async function init() {
   [HOST, CFG, RULES] = await Promise.all([api("host"), api("config"), api("rules")]);
   LANG = CFG.lang === "en" ? "en" : "ru";
   document.documentElement.dataset.theme = CFG.theme === "light" ? "light" : "dark";
-  if (CFG.acrylic) document.documentElement.setAttribute("data-acrylic", "");
+  applyAcrylicClass();
   applyI18n();
   renderHeader();
   sparks.cpu = new Spark($("cCpu"), 100); sparks.mem = new Spark($("cMem"), 100);

@@ -252,15 +252,27 @@ input[type=range] { flex: 1; accent-color: var(--accent); }
 #devicesList .group, #regList .group, #drvUpdates { margin-top: 12px; }
 #regList label.item { cursor: pointer; }
 
-/* Режим размытия (акрил) — панели полупрозрачны, фон виден сквозь них */
-/* Деликатное тёмное «стекло»: панели почти непрозрачны, подложка лишь слегка просвечивает. */
-/* «Тёмное стекло»: контент почти непрозрачен и всегда читаем даже без системного
-   размытия; лёгкая полупрозрачность только у фона окна и боковых панелей. */
-:root[data-acrylic] body { background: color-mix(in srgb, var(--bg) 86%, transparent); }
-:root[data-acrylic] .top, :root[data-acrylic] .side, :root[data-acrylic] .status { background: color-mix(in srgb, var(--panel) 96%, transparent); }
-:root[data-acrylic] .main { background: color-mix(in srgb, var(--bg) 94%, transparent); }
-:root[data-acrylic] .card, :root[data-acrylic] .items, :root[data-acrylic] .modal-box { background: var(--panel); }
-:root[data-acrylic] .seg, :root[data-acrylic] .input, :root[data-acrylic] .btn { background: color-mix(in srgb, var(--panel2) 96%, transparent); }
+/* «Стекло»: просвечивают только фоны, текст и элементы остаются чёткими.
+   Плотность слоёв задаёт ползунок прозрачности (--g-*: проценты, считает app.js).
+   Слои идут от прозрачного к плотному: окно → боковые панели → карточки → поля. */
+:root { --g-bg: 90%; --g-side: 94%; --g-card: 97%; --g-ctl: 98%; }
+:root[data-acrylic], :root[data-acrylic] body { background: transparent; }
+:root[data-acrylic] body { background: color-mix(in srgb, var(--bg) var(--g-bg), transparent); }
+:root[data-acrylic] .main { background: transparent; }
+:root[data-acrylic] .top, :root[data-acrylic] .side, :root[data-acrylic] .status {
+  background: color-mix(in srgb, var(--panel) var(--g-side), transparent);
+}
+:root[data-acrylic] .card, :root[data-acrylic] .items {
+  background: color-mix(in srgb, var(--panel) var(--g-card), transparent);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+}
+:root[data-acrylic][data-theme="light"] .card, :root[data-acrylic][data-theme="light"] .items { box-shadow: inset 0 1px 0 rgba(255,255,255,.6); }
+/* модальные окна и палитра — всегда плотные: их читают, а не любуются */
+:root[data-acrylic] .modal-box, :root[data-acrylic] .seg, :root[data-acrylic] .input, :root[data-acrylic] .btn:not(.btn-accent):not(.btn-danger) {
+  background-color: color-mix(in srgb, var(--panel2) var(--g-ctl), transparent);
+}
+:root[data-acrylic] .btn-danger { background: transparent; }
+:root[data-acrylic] .btn-danger:hover:not(:disabled) { background: var(--accent); }
 .wu-details { margin-top: 4px; }
 .wu-details > summary { cursor: pointer; color: var(--muted); font-size: 12.5px; padding: 6px 2px; user-select: none; }
 .wu-details > summary:hover { color: var(--text); }

@@ -71,7 +71,7 @@ Running the installer again updates the app and keeps your settings. Uninstall v
 | **Network** | Internet check with a verdict, adapters, TCP ping, port check, traceroute |
 | **Report & security** | Antivirus, firewall, BitLocker, updates, UAC, Secure Boot, SMBv1, RDP; boot time and what slows it; HTML/JSON computer report |
 | **History** | Every change with an Undo button, plus the action log |
-| **Also** | Live overview, processes and priority rules, drivers from official sources, registry healer with `.reg` backups, maintenance (SFC, DISM, Winsock, DNS), **Ctrl+K** command palette, game mode, tray mode with quick actions, profile export/import, dark & light themes, Windows 11 acrylic glass (works on 10 too) |
+| **Also** | Live overview, processes and priority rules, drivers from official sources, registry healer with `.reg` backups, maintenance (SFC, DISM, Winsock, DNS), **Ctrl+K** command palette, game mode, tray mode with quick actions, profile export/import, dark & light themes |
 
 <div align="center">
 <img src="docs/assets/theme.gif" alt="Dark and light themes" width="80%">

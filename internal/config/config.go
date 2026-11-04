@@ -23,11 +23,6 @@ type Config struct {
 	Rules         []rules.Rule `json:"rules"`
 
 	// Внешний вид окна
-	Opacity int  `json:"opacity"` // непрозрачность фона окна, % (20–100; 100 — без прозрачности)
-	Acrylic bool `json:"acrylic"` // системный фон окна (как в Windows 11)
-	// Backdrop — вид системного фона: mica (как Параметры и Проводник Windows 11)
-	// или acrylic (полупрозрачное размытое стекло, сквозь него видны окна).
-	Backdrop string `json:"backdrop"`
 
 	// Фоновая работа
 	CloseToTray  bool `json:"close_to_tray"`  // при закрытии окна — сворачивать в трей
@@ -62,7 +57,6 @@ type Schedule struct {
 func Default() *Config {
 	return &Config{
 		Theme:         "dark",
-		Opacity:       100,
 		IntervalSec:   2,
 		AutoRules:     true,
 		TrimThreshold: 85,
@@ -115,12 +109,6 @@ func (c *Config) Normalize() {
 	}
 	if c.HogThreshold < 10 || c.HogThreshold > 100 {
 		c.HogThreshold = 50
-	}
-	if c.Backdrop != "mica" && c.Backdrop != "acrylic" {
-		c.Backdrop = "acrylic"
-	}
-	if c.Opacity < 20 || c.Opacity > 100 {
-		c.Opacity = 100
 	}
 	if c.Schedule.Day < 0 || c.Schedule.Day > 7 {
 		c.Schedule.Day = 0

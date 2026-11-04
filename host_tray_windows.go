@@ -263,10 +263,6 @@ func trayWndProc(hwnd, msg, wparam, lparam uintptr) uintptr {
 			showTrayMenu()
 		}
 		return 0
-	case 0x0231: // WM_ENTERSIZEMOVE
-		onSizeMove(true)
-	case 0x0232: // WM_EXITSIZEMOVE
-		onSizeMove(false)
 	case wmClose:
 		if atomic.LoadInt32(&quitting) == 0 && closeTray != nil && closeTray() {
 			procShowWindow.Call(hwnd, swHide)

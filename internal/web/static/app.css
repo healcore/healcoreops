@@ -252,13 +252,6 @@ input[type=range] { flex: 1; accent-color: var(--accent); }
 #devicesList .group, #regList .group, #drvUpdates { margin-top: 12px; }
 #regList label.item { cursor: pointer; }
 
-/* Прозрачность «как в Windows»: окно включает системный Acrylic за содержимым,
-   а app.js делает полупрозрачными только фоновые цвета темы (--bg, --panel,
-   --panel2) — тема остаётся сама собой, текст и элементы непрозрачны. */
-:root[data-acrylic] { background: transparent; }
-:root[data-acrylic] .main { background: transparent; }
-/* то, что читают поверх всего, — плотное */
-:root[data-acrylic] .modal-box, :root[data-acrylic] .palette-box, :root[data-acrylic] .toast { background: var(--panel-solid); }
 .wu-details { margin-top: 4px; }
 .wu-details > summary { cursor: pointer; color: var(--muted); font-size: 12.5px; padding: 6px 2px; user-select: none; }
 .wu-details > summary:hover { color: var(--text); }
@@ -366,7 +359,6 @@ kbd { font: 600 10px/1 "Segoe UI", system-ui, sans-serif; color: var(--dim); bor
 .pal-row { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 7px; cursor: pointer; }
 .pal-row.on { background: var(--sel); }
 .palette-foot { border-top: 1px solid var(--border); padding: 8px 16px; }
-:root[data-acrylic] .palette-box { background: var(--panel); }
 @media (max-width: 1150px) { .sv-item select.input { width: 150px; } .path-input { width: 200px; } }
 .drive .toolbar b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 

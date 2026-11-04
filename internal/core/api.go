@@ -183,7 +183,7 @@ func (c *Core) routes(m *http.ServeMux) {
 			"drivers": drivers.Supported(), "reghealer": reghealer.Supported(),
 			"programs": programs.Supported(), "sysadmin": sysadmin.Supported(), "diag": diag.Supported(),
 			"disk": diskspace.Supported(), "policy": policy.Get(), "logDir": LogDir(), "reportsDir": ReportsDir(),
-			"configPath": config.Path(), "self": c.col.Self(), "backdrops": append([]string{}, c.Backdrops...),
+			"configPath": config.Path(), "self": c.col.Self(),
 		})
 	})
 	c.routes2(m)
@@ -455,7 +455,7 @@ func (c *Core) routes(m *http.ServeMux) {
 		}
 		if policy.Get().LockSettings {
 			for k := range in { // при блокировке можно менять только внешний вид
-				if k != "lang" && k != "theme" && k != "opacity" && k != "acrylic" && k != "backdrop" {
+				if k != "lang" && k != "theme" {
 					delete(in, k)
 				}
 			}
@@ -491,12 +491,6 @@ func (c *Core) routes(m *http.ServeMux) {
 					_ = json.Unmarshal(v, &cfg.CloseToTray)
 				case "run_at_startup":
 					_ = json.Unmarshal(v, &cfg.RunAtStartup)
-				case "opacity":
-					_ = json.Unmarshal(v, &cfg.Opacity)
-				case "acrylic":
-					_ = json.Unmarshal(v, &cfg.Acrylic)
-				case "backdrop":
-					_ = json.Unmarshal(v, &cfg.Backdrop)
 				case "driver_no_wu":
 					_ = json.Unmarshal(v, &cfg.DriverNoWU)
 				case "schedule":
@@ -508,18 +502,10 @@ func (c *Core) routes(m *http.ServeMux) {
 			cfg.Normalize()
 		})
 		cfg := c.Config()
-		_, a1 := in["acrylic"]
-		_, a2 := in["backdrop"]
-		if (a1 || a2) && c.OnAcrylic != nil {
-			c.OnAcrylic(cfg.Acrylic)
-		}
 		if _, ok := in["run_at_startup"]; ok {
 			if err := autostart.SetSelfStartup(cfg.RunAtStartup); err != nil {
 				c.Log(LvlErr, i18n.T("Автозапуск: %v"), err)
 			}
-		}
-		if _, ok := in["opacity"]; ok && c.OnOpacity != nil {
-			c.OnOpacity(cfg.Opacity)
 		}
 		writeJSON(w, cfg)
 	})

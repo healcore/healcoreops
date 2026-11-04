@@ -92,9 +92,12 @@ func handoffToRunningInstance() bool {
 
 func runHost(c *core.Core, url string) {
 	dark := c.Config().Theme == "dark"
-	// Прозрачный фон WebView2 (альфа 0, цвет тёмный — без светлой каймы):
-	// сквозь него виден системный Acrylic; без прозрачности фон рисует сам HTML.
-	os.Setenv("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", "000C0C0E")
+	// Непрозрачный фон WebView2 в цвет темы — без белой вспышки при запуске.
+	if dark {
+		os.Setenv("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", "FF0C0C0E")
+	} else {
+		os.Setenv("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", "FFF2F2F4")
+	}
 
 	scale := 1.0
 	if procGetDpi.Find() == nil {
@@ -130,7 +133,7 @@ func runHost(c *core.Core, url string) {
 	defer wv.Destroy()
 
 	hwnd := uintptr(wv.Window())
-	applyAppearance(hwnd, c.Config().Opacity, dark)
+	applyAppearance(hwnd, dark)
 
 	// Фоновый режим: значок в трее, сворачивание вместо закрытия, уведомления.
 	cfg := c.Config()
@@ -140,16 +143,9 @@ func runHost(c *core.Core, url string) {
 	subclass(hwnd)
 	_ = autostart.SetSelfStartup(cfg.RunAtStartup) // сверяем запись автозапуска
 
-	c.OnTheme = func(d bool) { wv.Dispatch(func() { applyAppearance(hwnd, c.Config().Opacity, d) }) }
+	c.OnTheme = func(d bool) { wv.Dispatch(func() { applyAppearance(hwnd, d) }) }
 	c.OnQuit = func() { wv.Dispatch(requestQuit) }
 	c.OnNotify = func(title, text string) { wv.Dispatch(func() { notifyBalloon(title, text) }) }
-	if glassSupported() {
-		c.Backdrops = []string{"acrylic"}
-	}
-	c.OnOpacity = func(pct int) {
-		wv.Dispatch(func() { applyAppearance(hwnd, pct, c.Config().Theme == "dark") })
-	}
-	c.OnAcrylic = func(bool) {}
 	// Запуск из автозагрузки с ключом --minimized: сразу в трей.
 	if minimizedStart() && cfg.CloseToTray {
 		procShowWindow.Call(hwnd, swHide)

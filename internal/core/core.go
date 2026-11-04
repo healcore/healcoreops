@@ -20,7 +20,7 @@ import (
 )
 
 // Version — версия приложения.
-const Version = "1.8.6"
+const Version = "1.8.7"
 
 // Уровни записей журнала.
 const (
@@ -61,12 +61,6 @@ type Core struct {
 	OnQuit func()
 	// OnNotify показывает системное уведомление (Windows — всплывающее окно из трея).
 	OnNotify func(title, text string)
-	// OnOpacity меняет прозрачность окна (40–100 %).
-	OnOpacity func(pct int)
-	// Backdrops — виды системного фона окна, доступные на этой ОС (mica, acrylic).
-	Backdrops []string
-	// OnAcrylic включает/выключает размытие фона окна.
-	OnAcrylic func(on bool)
 
 	notify notifyState
 	gmu    sync.Mutex // защищает game

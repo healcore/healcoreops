@@ -189,8 +189,6 @@ const DICT = {
   profile_exported: ["Профиль сохранён в файл", "Profile saved to file"], bad_profile: ["Это не файл профиля HealCoreOps", "Not a HealCoreOps profile file"],
   import_confirm: ["Применить настройки, правила и твики из файла? Текущие будут заменены.", "Apply settings, rules and tweaks from the file? Current ones will be replaced."],
   profile_imported: ["Профиль применён (изменено твиков: %1)", "Profile applied (%1 tweaks changed)"],
-  opacity: ["Прозрачность", "Transparency"], opacity_only_app: ["Прозрачность работает в окне программы на Windows 10 и 11.", "Transparency works in the app window on Windows 10 and 11."],
-  opacity_help: ["Фон окна становится полупрозрачным и размытым, как в меню «Пуск». Текст остаётся чётким. 0 % — выключено.", "The window background becomes translucent and blurred, like the Start menu. Text stays crisp. 0% — off."],
   background: ["Фоновый режим", "Background mode"],
   close_tray: ["При закрытии сворачивать в трей (не выходить)", "On close, minimize to tray (don't exit)"],
   run_startup: ["Запускать вместе с Windows (в трее)", "Start with Windows (in the tray)"],

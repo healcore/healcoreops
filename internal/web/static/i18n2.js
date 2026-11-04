@@ -188,7 +188,7 @@ Silent install:
 
   // Драйверы (1.8.1)
   drv_title: ["Обновление драйверов", "Driver updates"],
-  drv_intro: ["Нажмите «Проверить обновления» — найдём новые версии для каждого устройства.", "Click “Check for updates” to find newer versions for each device."],
+  drv_intro: ["Нажмите «Проверить обновления» — поиск идёт в фоне, можно продолжать работать.", "Click “Check for updates” — it runs in the background, keep working."],
   drv_check: ["Проверить обновления", "Check for updates"],
   drv_use_wu: ["Брать драйверы производителей из каталога Windows Update", "Use manufacturers' drivers from the Windows Update catalog"],
   drv_src2: ["Видеокарты NVIDIA обновляются напрямую с nvidia.com: последняя версия для вашей модели, проверка цифровой подписи NVIDIA, тихая установка. Остальные устройства (чипсет платы, Realtek, MediaTek, AMD, Intel) — пакетами самих производителей, которые они публикуют в каталоге Windows Update; поиск идёт по точному идентификатору оборудования. Прошивки BIOS автоматически не ставятся.",
@@ -205,5 +205,9 @@ Silent install:
   drv_update_q: ["Обновить драйверы?\n\n%1\n\nВо время установки видеодрайвера экран может мигнуть. Откатить драйвер можно в Диспетчере устройств.",
     "Update drivers?\n\n%1\n\nThe screen may flicker while the graphics driver installs. You can roll back a driver in Device Manager."],
   drv_update_all_q0: ["Сначала найдём обновления для всех устройств, затем установим их. Продолжить?", "We'll first look for updates for all devices and then install them. Continue?"],
+  drv_log_show: ["Подробнее", "Details"], drv_log_hide: ["Скрыть", "Hide"],
+  drv_done_ok: ["Готово.", "Done."], drv_done_err: ["Завершено с ошибками.", "Finished with errors."],
+  drv_installed_ok: ["Драйверы обновлены. Для части из них может понадобиться перезагрузка.", "Drivers updated. Some may need a restart."],
+  drv_bg_note: ["Установка идёт в фоне — можно продолжать работать с программой. Когда закончится, придёт уведомление.", "It runs in the background — keep using the app. You'll be notified when it's done."],
   ping_icmp_blocked: [" (ICMP закрыт — ответил TCP-порт)", " (ICMP blocked — TCP port answered)"],
 });

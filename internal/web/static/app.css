@@ -377,3 +377,9 @@ kbd { font: 600 10px/1 "Segoe UI", system-ui, sans-serif; color: var(--dim); bor
 .drv-item .tags { flex-wrap: wrap; justify-content: flex-end; }
 .drv-bar .toolbar b { font-size: 15px; }
 .drv-bar .help { margin-bottom: 0; }
+.drv-progress { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: var(--panel2); }
+.drv-progress #drvProgText { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.drv-progress .btn { min-height: 28px; padding: 3px 10px; }
+.spin { width: 14px; height: 14px; flex: none; border: 2px solid var(--muted); border-top-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
+.drv-progress.done .spin { animation: none; border-color: var(--muted); border-style: solid; }
+#drvLog { margin-top: 8px; max-height: 220px; }

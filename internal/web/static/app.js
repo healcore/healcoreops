@@ -667,40 +667,69 @@ $("drvSelAll").onchange = () => {
 $("drvSearch").oninput = renderDevices;
 $("drvReload").onclick = () => loadDrivers(true);
 $("drvUseWU").onchange = () => setCfg({ driver_no_wu: !$("drvUseWU").checked });
+// Проверка и установка идут в фоне: строка хода в разделе, журнал — по кнопке,
+// по завершении — уведомление (даже если пользователь ушёл в другой раздел).
+let drvWatching = false, drvJobKind = "", drvLogOpen = false;
+function renderDrvProgress(job) {
+  const lines = (job && job.lines) || [];
+  const running = job && job.running;
+  $("drvProgress").classList.toggle("hidden", !running && !lines.length);
+  $("drvProgress").classList.toggle("done", !running);
+  const last = [...lines].reverse().find(l => l.trim()) || t("driver_working");
+  $("drvProgText").textContent = running ? last.replace(/^[▸\s]+/, "") : (job.ok ? t("drv_done_ok") : t("drv_done_err")) + " " + last.replace(/^[✓×▸!\s]+/, "");
+  $("drvLog").innerHTML = lines.map(l => `<div>${esc(l)}</div>`).join("");
+  $("drvLog").classList.toggle("hidden", !drvLogOpen);
+  if (drvLogOpen) $("drvLog").scrollTop = 1e9;
+  $("drvLogToggle").textContent = t(drvLogOpen ? "drv_log_hide" : "drv_log_show");
+  $("drvCheck").disabled = !!running;
+  if (running) { $("drvUpdSel").disabled = true; $("drvUpdAll").disabled = true; }
+}
+$("drvLogToggle").onclick = () => { drvLogOpen = !drvLogOpen; $("drvLog").classList.toggle("hidden", !drvLogOpen); $("drvLogToggle").textContent = t(drvLogOpen ? "drv_log_hide" : "drv_log_show"); $("drvLog").scrollTop = 1e9; };
 async function refreshDrvAvail() {
   let r; try { r = await api("drivers/updates"); } catch { return; }
   DRV_AVAIL = r.avail || {}; DRV_CHECKED = !!r.checked;
   const running = r.job && r.job.running;
-  $("drvCheck").disabled = running;
-  if (running) { $("drvSummary").textContent = t("driver_working"); clearTimeout(drvPoll); drvPoll = setTimeout(refreshDrvAvail, 1500); }
   renderDevices();
-  if (running) $("drvSummary").textContent = t("driver_working");
+  renderDrvProgress(r.job);
+  clearTimeout(drvPoll);
+  if (running) {
+    drvWatching = true;
+    if (!drvJobKind) drvJobKind = r.job.phase;
+    drvPoll = setTimeout(refreshDrvAvail, 1500);
+    return;
+  }
+  if (drvWatching) { // операция только что завершилась
+    drvWatching = false;
+    const n = Object.keys(DRV_AVAIL).filter(drvHas).length;
+    if (drvJobKind === "check") {
+      drvSel.clear(); Object.keys(DRV_AVAIL).filter(drvHas).forEach(id => drvSel.add(id));
+      renderDevices(); renderDrvProgress(r.job);
+      toast(t("nav_drivers") + ": " + (r.job.ok ? (n ? t("drv_found_n", n) : t("drv_all_current")) : t("drv_done_err")), !r.job.ok);
+    } else {
+      toast(t("nav_drivers") + ": " + (r.job.ok ? t("drv_installed_ok") : t("drv_done_err")), !r.job.ok);
+      drvSel.clear(); loadDrivers(true);
+    }
+    drvJobKind = "";
+  }
 }
-function showDrvJobModal(title, onDone) {
-  $("mTitle").textContent = title;
-  $("mBody").innerHTML = `<div id="jobLog" class="joblog"></div>`;
-  $("mOk").classList.add("hidden"); $("mCancel").textContent = t("close"); $("mCancel").classList.remove("hidden");
-  $("modal").classList.remove("hidden");
-  let open = true;
-  $("mCancel").onclick = () => { open = false; $("modal").classList.add("hidden"); $("mOk").classList.remove("hidden"); };
-  const tick = async () => {
-    let r; try { r = await api("drivers/updates"); } catch { return; }
-    if (open && $("jobLog")) { $("jobLog").innerHTML = (r.job.lines || []).map(l => `<div>${esc(l)}</div>`).join(""); $("jobLog").scrollTop = 1e9; $("mCancel").textContent = r.job.running ? t("running") : t("close"); }
-    if (!r.job.running) { clearInterval(iv); if (onDone) onDone(r); }
-  };
-  const iv = setInterval(tick, 1000); tick();
+function startDrvWatch(kind) {
+  drvJobKind = kind; drvWatching = true;
+  $("drvProgress").classList.remove("hidden", "done");
+  $("drvProgText").textContent = t("driver_working");
+  $("drvCheck").disabled = true;
+  refreshDrvAvail();
 }
 $("drvCheck").onclick = async () => {
   try { await api("drivers/check", {}); } catch (e) { return toast(e.message, true); }
-  showDrvJobModal(t("drv_check"), r => { DRV_AVAIL = r.avail || {}; DRV_CHECKED = !!r.checked; drvSel.clear(); Object.keys(DRV_AVAIL).filter(drvHas).forEach(id => drvSel.add(id)); renderDevices(); });
+  startDrvWatch("check");
 };
 async function updateDrivers(ids, all) {
   if (!HOST.elevated) return toast(t("driver_need_admin"), true);
   const names = (DEVICES || []).filter(d => all ? drvHas(d.id) : ids.includes(d.id)).map(d => d.name);
   const body = all && !DRV_CHECKED ? t("drv_update_all_q0") : t("drv_update_q", names.map(n => "• " + n).join("\n"));
-  if (!await modal({ title: t("drv_update"), body, ok: t("drv_update") })) return;
+  if (!await modal({ title: t("drv_update"), body: body + "\n\n" + t("drv_bg_note"), ok: t("drv_update") })) return;
   try { await api("drivers/update", { ids, all, names }); } catch (e) { return toast(e.message, true); }
-  showDrvJobModal(t("drv_updating"), () => { drvSel.clear(); loadDrivers(true); });
+  startDrvWatch("update");
 }
 $("drvUpdSel").onclick = () => updateDrivers([...drvSel], false);
 $("drvUpdAll").onclick = () => updateDrivers([], true);

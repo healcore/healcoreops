@@ -3,7 +3,10 @@
 // выполняются в фоне, их вывод построчно отдаётся интерфейсу.
 package maintenance
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 // Action — операция обслуживания.
 type Action struct {
@@ -35,7 +38,7 @@ func Status() Job {
 	jmu.Lock()
 	defer jmu.Unlock()
 	cp := job
-	cp.Lines = append([]string(nil), job.Lines...)
+	cp.Lines = append([]string{}, job.Lines...) // всегда список, а не null — интерфейс на это рассчитывает
 	return cp
 }
 
@@ -59,7 +62,15 @@ func run(id, title string, fn func(emit func(string)) error) error {
 	jmu.Unlock()
 
 	go func() {
-		err := fn(emit)
+		var err error
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					err = fmt.Errorf("internal error: %v", r)
+				}
+			}()
+			err = fn(emit)
+		}()
 		jmu.Lock()
 		job.Running = false
 		job.Done = true

@@ -161,7 +161,7 @@ func Status() Job {
 	jmu.Lock()
 	defer jmu.Unlock()
 	cj := job
-	cj.Lines = append([]string(nil), job.Lines...)
+	cj.Lines = append([]string{}, job.Lines...)
 	return cj
 }
 

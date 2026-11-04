@@ -3,13 +3,16 @@
 package diag
 
 import (
+	"bufio"
 	"context"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"net"
+	"os/exec"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 	"unsafe"
 
@@ -131,9 +134,10 @@ func Traceroute(host string) error {
 		return errors.New(i18n.Pick("неверное имя узла — укажите, например, google.com или 8.8.8.8", "invalid host — use e.g. google.com or 8.8.8.8"))
 	}
 	if pIcmpSend.Find() != nil {
-		return errors.New("IcmpSendEcho is unavailable")
+		return maintenance.StartJob("tracert", "tracert "+host, func(emit func(string)) error { return tracertCmd(host, emit) })
 	}
 	return maintenance.StartJob("tracert", "tracert "+host, func(emit func(string)) error {
+		emit(fmt.Sprintf(i18n.Pick("Определяю адрес %s…", "Resolving %s…"), host))
 		dst, err := resolve4(host)
 		if err != nil {
 			return err
@@ -148,8 +152,10 @@ func Traceroute(host string) error {
 			reached := false
 			for i := range res {
 				r, err := icmpEcho(dst, uint8(ttl), 1200*time.Millisecond)
-				if err != nil {
-					return err
+				if err != nil || (r.Status != 0 && r.Status < 11000) {
+					// ICMP API недоступен или вернул системную ошибку — системный tracert
+					emit(i18n.Pick("ICMP API недоступен, запускаю системный tracert…", "ICMP API unavailable, running system tracert…"))
+					return tracertCmd(host, emit)
 				}
 				res[i] = r
 				if r.From != nil && (r.Status == ipSuccess || r.Status == ipTTLExpired) {
@@ -193,6 +199,28 @@ func Traceroute(host string) error {
 		emit(i18n.Pick("Достигнут предел переходов.", "Maximum hops reached."))
 		return nil
 	})
+}
+
+// tracertCmd — запасной путь: системный tracert с выводом в UTF-8, построчно.
+func tracertCmd(host string, emit func(string)) error {
+	if !ValidHost(host) {
+		return errors.New("bad host")
+	}
+	cmd := exec.Command("cmd.exe", "/d", "/c", "chcp 65001 >nul & tracert -d -w 1000 -h 30 "+host)
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
+	out, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	cmd.Stderr = cmd.Stdout
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	sc := bufio.NewScanner(out)
+	for sc.Scan() {
+		emit(strings.TrimRight(sc.Text(), "\r "))
+	}
+	return cmd.Wait()
 }
 
 // Ping — проверка связи: ICMP (как ping); если ICMP закрыт — по TCP.

@@ -555,7 +555,7 @@ function showJobModal(title, onDone) {
   $("mTitle").textContent = title;
   $("mBody").innerHTML = `<div id="jobLog" class="joblog"></div>`;
   $("mOk").classList.add("hidden");
-  $("mCancel").textContent = t("close");
+  $("mCancel").textContent = t("running");
   $("mCancel").classList.remove("hidden");
   $("modal").classList.remove("hidden");
   $("mCancel").onclick = () => { jobModalOpen = false; $("modal").classList.add("hidden"); $("mOk").classList.remove("hidden"); };
@@ -565,8 +565,9 @@ async function pollMaintJob() {
   const tick = async () => {
     let j;
     try { j = await api("maintenance/job"); } catch { return; }
+    const lines = j.lines || [];
     if (jobModalOpen && $("jobLog")) {
-      $("jobLog").innerHTML = j.lines.map(l => `<div>${esc(l)}</div>`).join("");
+      $("jobLog").innerHTML = lines.length ? lines.map(l => `<div>${esc(l)}</div>`).join("") : `<div class="muted">${esc(t("running"))}</div>`;
       $("jobLog").scrollTop = 1e9;
       $("mCancel").textContent = j.running ? t("running") : t("close");
     }
@@ -576,8 +577,9 @@ async function pollMaintJob() {
       if (j.done && jobOnDone) { const f = jobOnDone; jobOnDone = null; f(j); }
     }
   };
-  await tick();
-  maintPoll = setInterval(tick, 1000);
+  // опрос запускаем до первого запроса — сбой одного ответа не должен его остановить
+  maintPoll = setInterval(() => tick().catch(() => {}), 1000);
+  await tick().catch(() => {});
 }
 $("maintRestore").onclick = () => busy($("maintRestore"), async () => { await api("tweaks/restore-point", {}); toast(t("rp_ok")); });
 

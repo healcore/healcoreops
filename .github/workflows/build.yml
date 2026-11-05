@@ -50,7 +50,7 @@ jobs:
       - name: Upload unsigned app for signing
         id: app-unsigned
         if: env.IS_RELEASE == 'true' && env.SIGNPATH_ON == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: app-unsigned
           path: cmd/setup/payload/HealCoreOps.exe
@@ -78,7 +78,7 @@ jobs:
       - name: Upload unsigned installer for signing
         id: installer-unsigned
         if: env.IS_RELEASE == 'true' && env.SIGNPATH_ON == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: installer-unsigned
           path: dist/HealCoreOps-Setup.exe
@@ -123,7 +123,7 @@ jobs:
       - name: Checksums
         run: cd dist && sha256sum HealCoreOps-Setup.exe healcoreops-linux-amd64 > SHA256SUMS.txt && cat SHA256SUMS.txt
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: HealCoreOps
           path: dist/*

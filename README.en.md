@@ -24,8 +24,8 @@
 
 <br>
 
-<img src="docs/assets/demo.gif" alt="HealCoreOps in action" width="100%">
-<br><sub>Live overview → PC checkup → hardware health → open ports & firewall → duplicates → Ctrl+K search (Russian UI)</sub>
+<img src="docs/assets/tour-en.avif" alt="HealCoreOps: overview, PC checkup, hardware health, load history, ports, drivers, system snapshots, themes" width="100%">
+<br><sub>Overview → PC checkup → hardware health → load history → ports → drivers → system snapshots → Ctrl+K → themes · 60 fps · <a href="docs/assets/tour-en.mp4">MP4</a></sub>
 
 </div>
 
@@ -45,8 +45,6 @@ with all of that in a calm monochrome UI — and **every system change is record
 
 The interface is available in **English and Russian** (switch in Settings).
 
-<div align="center"><img src="docs/assets/showcase-en.png" alt="HealCoreOps — overview, load history, hardware health" width="100%"></div>
-
 ## Installation
 
 1. Download **[HealCoreOps-Setup.exe](https://github.com/healcore/healcoreops/releases/latest)** from the latest release.
@@ -62,28 +60,30 @@ Running the installer again updates the app and keeps your settings. Uninstall v
 
 ## How it works
 
-> GIFs not moving? If animation effects are turned off in Windows, GitHub shows a ▶ button on each GIF — click it.
-> The animations show the Russian UI; the app is fully available in English.
+> The animations are AVIF at 60 fps. If your browser does not show them (very old versions), open the
+> [MP4 video](docs/assets/tour-en.mp4).
 
 #### 🚀 Drivers: background check, install from official sources
 NVIDIA is checked on nvidia.com and other devices in the Windows Update catalog, in parallel. The window stays usable;
 the result is a “device: current → new version” list, then “Update selected” or “Update all”.
 
-<img src="docs/assets/drivers.gif" alt="Driver check and update" width="100%">
+<img src="docs/assets/drivers-en.avif" alt="Driver check and update" width="100%">
 
 #### 📈 Load history: what was slow, and when
 CPU and memory for 3 h – 7 days. Hover to see which processes loaded the PC that minute; click to pin the moment.
 
-<img src="docs/assets/loadhist.gif" alt="Load history" width="100%">
+<img src="docs/assets/loadhist-en.avif" alt="Load history" width="100%">
 
 #### 📸 System snapshots: what an installer brought along
 A “before” snapshot compared with now — new programs, startup entries, services, scheduled tasks, drivers and open ports.
 
-<img src="docs/assets/snapshots.gif" alt="System snapshot comparison" width="100%">
+<img src="docs/assets/snapshots-en.avif" alt="System snapshot comparison" width="100%">
 
-#### 🌗 Simple mode and themes
+#### ⌨️ Ctrl+K and themes
+Any page, tweak or action is a couple of keystrokes away; dark and light themes switch on the fly.
+Beginners get a simple mode with the main pages, administrators get everything.
 
-<img src="docs/assets/theme.gif" alt="Simple mode, all sections, themes" width="100%">
+<img src="docs/assets/theme-en.avif" alt="Ctrl+K search and theme switch" width="100%">
 
 ## Features
 

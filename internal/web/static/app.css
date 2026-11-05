@@ -32,7 +32,7 @@ input, select, textarea { user-select: text; font: inherit; color: inherit; }
 .small { font-size: 11.5px; }
 .grow { flex: 1; min-width: 0; }
 
-.app { display: grid; grid-template: "top top" 58px "side main" 1fr "status status" 28px / 208px 1fr; height: 100vh; }
+.app { display: grid; grid-template: "top top" 58px "side main" 1fr "status status" 28px / 222px 1fr; height: 100vh; }
 
 /* Шапка */
 .top { grid-area: top; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; background: var(--panel); border-bottom: 1px solid var(--border); }
@@ -432,3 +432,6 @@ kbd { font: 600 10px/1 "Segoe UI", system-ui, sans-serif; color: var(--dim); bor
 #nav .nav-mode svg { opacity: .7; }
 #nav .nav-mode:hover { color: var(--text); }
 .self-parts { margin-top: 8px; }
+/* пункты меню — в одну строку (жирный активный пункт не переносится) */
+.side button > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.side button { gap: 10px; }

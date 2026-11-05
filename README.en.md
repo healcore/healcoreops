@@ -24,7 +24,7 @@
 
 <br>
 
-<img src="docs/screenshots/overview-en.png" alt="HealCoreOps overview" width="100%">
+<img src="docs/assets/showcase-en.png" alt="HealCoreOps — overview, load history, hardware health" width="100%">
 
 </div>
 
@@ -44,7 +44,10 @@ with all of that in a calm monochrome UI — and **every system change is record
 
 The interface is available in **English and Russian** (switch in Settings).
 
-<div align="center"><img src="docs/assets/demo.gif" alt="HealCoreOps demo" width="100%"></div>
+<div align="center">
+<img src="docs/assets/demo.gif" alt="HealCoreOps in action" width="100%">
+<br><sub>PC checkup → hardware health → open ports & firewall → duplicates → Ctrl+K search (Russian UI)</sub>
+</div>
 
 ## Installation
 
@@ -53,8 +56,9 @@ The interface is available in **English and Russian** (switch in Settings).
 3. For tweaks and services click **Restart as administrator** in the app.
 
 > [!NOTE]
-> Windows SmartScreen may warn about an unknown publisher — the exe isn't code-signed yet.
-> Click “More info” → “Run anyway”. The source is open and releases are built by GitHub Actions from this repository.
+> Windows SmartScreen may warn about an unknown publisher — release signing is being set up
+> ([how it works](docs/SIGNING.md)). Click “More info” → “Run anyway”.
+> The source is open and releases are built by GitHub Actions from this repository.
 
 Running the installer again updates the app and keeps your settings. Uninstall via Settings → Apps → HealCoreOps.
 
@@ -75,11 +79,34 @@ Running the installer again updates the app and keeps your settings. Uninstall v
 | **System snapshots** | Take a “before” snapshot and compare with now: what was added to programs, startup, services, tasks, drivers and open ports |
 | **Report & security** | Antivirus, firewall, BitLocker, updates, UAC, Secure Boot, SMBv1, RDP; boot time and what slows it; HTML/JSON computer report |
 | **History** | Every change with an Undo button, plus the action log |
+| **Simple mode** | New installs show only the essentials; all sections are one click (or Ctrl+K) away |
 | **Also** | Live overview, processes and priority rules, drivers from official sources, registry healer with `.reg` backups, maintenance (SFC, DISM, Winsock, DNS), **Ctrl+K** command palette, game mode, tray mode with quick actions, profile export/import, dark & light themes |
 
-<div align="center">
-<img src="docs/assets/theme.gif" alt="Dark and light themes" width="80%">
-</div>
+<table>
+<tr>
+<td width="50%"><img src="docs/assets/loadhist.gif" alt="Load history"><br><sub><b>Load history</b> — hover to see who loaded the PC</sub></td>
+<td width="50%"><img src="docs/assets/drivers.gif" alt="Driver updates"><br><sub><b>Drivers</b> — NVIDIA and the Windows Update catalog in the background</sub></td>
+</tr>
+<tr>
+<td><img src="docs/assets/snapshots.gif" alt="System snapshots"><br><sub><b>Snapshots</b> — what an installer brought with it</sub></td>
+<td><img src="docs/assets/theme.gif" alt="Simple mode and themes"><br><sub><b>Simple mode ↔ all sections</b>, dark and light themes</sub></td>
+</tr>
+</table>
+
+<details>
+<summary><b>More screenshots</b></summary>
+
+<br>
+
+| | |
+|---|---|
+| <img src="docs/screenshots/overview-en.png" alt="Overview"><br><sub>Overview in English</sub> | <img src="docs/screenshots/hwhealth.png" alt="Hardware health"><br><sub>Hardware health</sub> |
+| <img src="docs/screenshots/ports.png" alt="Open ports"><br><sub>Open ports and firewall check</sub> | <img src="docs/screenshots/windows-update.png" alt="Windows Update"><br><sub>Windows Update</sub> |
+| <img src="docs/screenshots/duplicates.png" alt="Duplicates"><br><sub>Duplicate files</sub> | <img src="docs/screenshots/checkup.png" alt="PC checkup"><br><sub>PC checkup</sub> |
+| <img src="docs/screenshots/crashes.png" alt="Crashes"><br><sub>Crashes & errors</sub> | <img src="docs/screenshots/tweaks.png" alt="Tweaks"><br><sub>Tweaks</sub> |
+| <img src="docs/screenshots/report.png" alt="Report"><br><sub>Report, inventory, support bundle</sub> | <img src="docs/screenshots/overview-light.png" alt="Light theme"><br><sub>Light theme</sub> |
+
+</details>
 
 ## For system administrators
 

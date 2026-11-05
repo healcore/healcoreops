@@ -42,7 +42,7 @@ jobs:
             echo "IS_RELEASE=false" >> "$GITHUB_ENV"
           fi
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.24'
           cache-dependency-path: go.mod

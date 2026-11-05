@@ -24,7 +24,8 @@
 
 <br>
 
-<img src="docs/assets/showcase-en.png" alt="HealCoreOps — overview, load history, hardware health" width="100%">
+<img src="docs/assets/demo.gif" alt="HealCoreOps in action" width="100%">
+<br><sub>Live overview → PC checkup → hardware health → open ports & firewall → duplicates → Ctrl+K search (Russian UI)</sub>
 
 </div>
 
@@ -44,10 +45,7 @@ with all of that in a calm monochrome UI — and **every system change is record
 
 The interface is available in **English and Russian** (switch in Settings).
 
-<div align="center">
-<img src="docs/assets/demo.gif" alt="HealCoreOps in action" width="100%">
-<br><sub>PC checkup → hardware health → open ports & firewall → duplicates → Ctrl+K search (Russian UI)</sub>
-</div>
+<div align="center"><img src="docs/assets/showcase-en.png" alt="HealCoreOps — overview, load history, hardware health" width="100%"></div>
 
 ## Installation
 
@@ -61,6 +59,31 @@ The interface is available in **English and Russian** (switch in Settings).
 > The source is open and releases are built by GitHub Actions from this repository.
 
 Running the installer again updates the app and keeps your settings. Uninstall via Settings → Apps → HealCoreOps.
+
+## How it works
+
+> GIFs not moving? If animation effects are turned off in Windows, GitHub shows a ▶ button on each GIF — click it.
+> The animations show the Russian UI; the app is fully available in English.
+
+#### 🚀 Drivers: background check, install from official sources
+NVIDIA is checked on nvidia.com and other devices in the Windows Update catalog, in parallel. The window stays usable;
+the result is a “device: current → new version” list, then “Update selected” or “Update all”.
+
+<img src="docs/assets/drivers.gif" alt="Driver check and update" width="100%">
+
+#### 📈 Load history: what was slow, and when
+CPU and memory for 3 h – 7 days. Hover to see which processes loaded the PC that minute; click to pin the moment.
+
+<img src="docs/assets/loadhist.gif" alt="Load history" width="100%">
+
+#### 📸 System snapshots: what an installer brought along
+A “before” snapshot compared with now — new programs, startup entries, services, scheduled tasks, drivers and open ports.
+
+<img src="docs/assets/snapshots.gif" alt="System snapshot comparison" width="100%">
+
+#### 🌗 Simple mode and themes
+
+<img src="docs/assets/theme.gif" alt="Simple mode, all sections, themes" width="100%">
 
 ## Features
 
@@ -81,17 +104,6 @@ Running the installer again updates the app and keeps your settings. Uninstall v
 | **History** | Every change with an Undo button, plus the action log |
 | **Simple mode** | New installs show only the essentials; all sections are one click (or Ctrl+K) away |
 | **Also** | Live overview, processes and priority rules, drivers from official sources, registry healer with `.reg` backups, maintenance (SFC, DISM, Winsock, DNS), **Ctrl+K** command palette, game mode, tray mode with quick actions, profile export/import, dark & light themes |
-
-<table>
-<tr>
-<td width="50%"><img src="docs/assets/loadhist.gif" alt="Load history"><br><sub><b>Load history</b> — hover to see who loaded the PC</sub></td>
-<td width="50%"><img src="docs/assets/drivers.gif" alt="Driver updates"><br><sub><b>Drivers</b> — NVIDIA and the Windows Update catalog in the background</sub></td>
-</tr>
-<tr>
-<td><img src="docs/assets/snapshots.gif" alt="System snapshots"><br><sub><b>Snapshots</b> — what an installer brought with it</sub></td>
-<td><img src="docs/assets/theme.gif" alt="Simple mode and themes"><br><sub><b>Simple mode ↔ all sections</b>, dark and light themes</sub></td>
-</tr>
-</table>
 
 <details>
 <summary><b>More screenshots</b></summary>

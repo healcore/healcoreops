@@ -1,12 +1,12 @@
 module github.com/healcore/healcoreops
 
-go 1.24
+go 1.26.0
 
 require (
 	github.com/jchv/go-webview2 v0.0.0-20260205173254-56598839c808
 	github.com/shirou/gopsutil/v4 v4.25.9
 	github.com/tc-hib/winres v0.3.1
-	golang.org/x/sys v0.35.0
+	golang.org/x/sys v0.49.0
 )
 
 require (

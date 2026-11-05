@@ -26,6 +26,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.24'
+          cache-dependency-path: go.mod
 
       - name: Check version matches tag
         if: env.IS_RELEASE == 'true'
@@ -33,6 +34,14 @@ jobs:
           want="${GITHUB_REF_NAME#v}"
           grep -q "^VERSION=$want$" build.sh || { echo "build.sh VERSION != $want"; exit 1; }
           grep -q "const Version = \"$want\"" internal/core/core.go || { echo "core.Version != $want"; exit 1; }
+
+      # Установщик встраивает иконку и программу (//go:embed). Эти файлы создаёт build.sh,
+      # в git их нет — для проверки кода до сборки кладём иконку и пустую заготовку.
+      - name: Prepare generated files
+        run: |
+          cp Icon.png cmd/setup/icon.png
+          mkdir -p cmd/setup/payload
+          test -f cmd/setup/payload/HealCoreOps.exe || : > cmd/setup/payload/HealCoreOps.exe
 
       - name: Tests
         run: |

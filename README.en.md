@@ -16,7 +16,7 @@
 
 [Русский](README.md) · **English**
 
-[**⬇ Download**](https://github.com/healcore/healcoreops/releases/latest) ·
+[**⬇ Download**](https://github.com/healcore/healcoreops/releases/latest/download/HealCoreOps-Setup.exe) ·
 [Features](#features) ·
 [For sysadmins](#for-system-administrators) ·
 [Security](#security) ·
@@ -46,7 +46,7 @@ The interface is available in **English and Russian** (switch in Settings).
 
 ## Installation
 
-1. Download **[HealCoreOps-Setup.exe](https://github.com/healcore/healcoreops/releases/latest)** from the latest release.
+1. Download **[HealCoreOps-Setup.exe](https://github.com/healcore/healcoreops/releases/latest/download/HealCoreOps-Setup.exe)** from the [latest release](https://github.com/healcore/healcoreops/releases/latest).
 2. Run it → Install. No admin rights are needed to install.
 3. For tweaks and services click **Restart as administrator** in the app.
 

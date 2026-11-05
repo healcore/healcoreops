@@ -16,7 +16,7 @@
 
 **Русский** · [English](README.en.md)
 
-[**⬇ Скачать**](https://github.com/healcore/healcoreops/releases/latest) ·
+[**⬇ Скачать**](https://github.com/healcore/healcoreops/releases/latest/download/HealCoreOps-Setup.exe) ·
 [Возможности](#возможности) ·
 [Для администраторов](#для-системного-администратора) ·
 [Безопасность](#безопасность) ·
@@ -45,7 +45,7 @@
 
 ## Установка
 
-1. Скачайте **[HealCoreOps-Setup.exe](https://github.com/healcore/healcoreops/releases/latest)** из последнего релиза.
+1. Скачайте **[HealCoreOps-Setup.exe](https://github.com/healcore/healcoreops/releases/latest/download/HealCoreOps-Setup.exe)** из [последнего релиза](https://github.com/healcore/healcoreops/releases/latest).
 2. Запустите → «Установить». Права администратора для установки не нужны.
 3. Для твиков и служб нажмите в окне **«Перезапустить от имени администратора»**.
 

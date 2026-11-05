@@ -21,7 +21,7 @@ jobs:
       SIGNPATH_ON: ${{ secrets.SIGNPATH_API_TOKEN != '' && vars.SIGNPATH_ORGANIZATION_ID != '' }}
       PFX_ON: ${{ secrets.WINDOWS_CERT_PFX != '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Релиз выпускается в двух случаях:
       #  • отправлен тег v* (как раньше);

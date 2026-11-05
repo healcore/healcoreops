@@ -35,7 +35,7 @@ go vet ./... && GOOS=windows go vet ./... && go test ./...
 4. Создайте тег и отправьте его:
 
    ```sh
-   git tag v1.10.0 && git push origin v1.10.0
+   git tag v1.10.1 && git push origin v1.10.1
    ```
 
 GitHub Actions проверит, что номер версии совпадает с тегом, соберёт установщик и Linux-версию,

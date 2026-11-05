@@ -75,7 +75,7 @@
 ### 5. Выпустите подписанный релиз
 
 ```bash
-git tag v1.10.0 && git push origin v1.10.0
+git tag v1.10.1 && git push origin v1.10.1
 ```
 
 Сборка дойдёт до шага **Sign app (SignPath)** и будет ждать (до часа). В SignPath

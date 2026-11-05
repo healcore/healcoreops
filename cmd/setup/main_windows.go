@@ -41,7 +41,7 @@ var iconPNG []byte
 
 const (
 	appName    = "HealCoreOps"
-	appVersion = "1.10.0"
+	appVersion = "1.10.1"
 	exeName    = "HealCoreOps.exe"
 	uninstName = "uninstall.exe"
 	uninstKey  = `Software\Microsoft\Windows\CurrentVersion\Uninstall\HealCoreOps`
